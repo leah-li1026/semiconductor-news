@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>半导体产业每日情报站</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: #0a0e1a;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #0f1629 0%, #0a0e1a 100%);
+            border-bottom: 1px solid #1e293b;
+            padding: 16px 0;
+            position: sticky; top: 0; z-index: 100;
+            backdrop-filter: blur(20px);
+        }
+        .header-inner {
+            max-width: 1400px; margin: 0 auto; padding: 0 24px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo-icon {
+            width: 42px; height: 42px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            font-size: 22px; box-shadow: 0 4px 15px rgba(59,130,246,0.3);
+        }
+        .logo h1 {
+            font-size: 20px; font-weight: 700;
+            background: linear-gradient(90deg, #60a5fa, #a78bfa, #f472b6);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .logo-sub { font-size: 11px; color: #64748b; margin-top: 2px; }
+        .header-right { display: flex; align-items: center; gap: 16px; }
+        .date-info { color: #94a3b8; font-size: 13px; }
+        .refresh-btn {
+            background: #1e293b; border: 1px solid #334155; color: #94a3b8;
+            padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px;
+            transition: all 0.2s;
+        }
+        .refresh-btn:hover { background: #334155; color: #e2e8f0; }
+
+        /* Nav Tabs */
+        .nav {
+            max-width: 1400px; margin: 0 auto; padding: 12px 24px;
+            display: flex; gap: 6px; flex-wrap: wrap;
+            border-bottom: 1px solid #1e293b;
+        }
+        .nav-btn {
+            padding: 7px 14px; border-radius: 8px; border: 1px solid transparent;
+            background: transparent; color: #64748b; cursor: pointer;
+            font-size: 13px; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: #1e293b; color: #94a3b8; }
+        .nav-btn.active { background: #1e293b; border-color: #334155; color: #e2e8f0; }
+
+        /* Container */
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px 24px 40px; }
+
+        /* Section */
+        .section { margin-bottom: 28px; }
+        .section-header {
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 14px; padding-bottom: 10px;
+            border-bottom: 1px solid #1e293b;
+        }
+        .section-icon { font-size: 18px; }
+        .section-title { font-size: 17px; font-weight: 600; color: #f1f5f9; }
+        .section-badge {
+            font-size: 11px; color: #64748b; background: #1e293b;
+            padding: 3px 10px; border-radius: 10px; margin-left: auto;
+        }
+        .section-link {
+            font-size: 12px; color: #60a5fa; text-decoration: none;
+            margin-left: auto; transition: color 0.2s;
+        }
+        .section-link:hover { color: #93c5fd; }
+
+        /* ========== 今日要点 ========== */
+        .highlights {
+            background: linear-gradient(135deg, #1a1f3a 0%, #0f1629 100%);
+            border: 1px solid #2a3158; border-radius: 16px;
+            padding: 24px; margin-bottom: 28px;
+            position: relative; overflow: hidden;
+        }
+        .highlights::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #f472b6);
+        }
+        .highlights-title {
+            font-size: 18px; font-weight: 700; margin-bottom: 16px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .highlights-title span { color: #f59e0b; }
+        .highlight-list { list-style: none; }
+        .highlight-item {
+            padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex; align-items: flex-start; gap: 12px;
+            cursor: pointer; transition: all 0.15s;
+        }
+        .highlight-item:last-child { border-bottom: none; }
+        .highlight-item:hover { padding-left: 8px; }
+        .highlight-num {
+            min-width: 28px; height: 28px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 700; flex-shrink: 0;
+        }
+        .highlight-num.n1 { background: linear-gradient(135deg, #ef4444, #f97316); color: white; }
+        .highlight-num.n2 { background: linear-gradient(135deg, #f59e0b, #eab308); color: #1a1a1a; }
+        .highlight-num.n3 { background: linear-gradient(135deg, #3b82f6, #6366f1); color: white; }
+        .highlight-num.n4 { background: rgba(59,130,246,0.2); color: #60a5fa; }
+        .highlight-num.n5 { background: rgba(100,116,139,0.2); color: #94a3b8; }
+        .highlight-text { flex: 1; }
+        .highlight-text strong { color: #f1f5f9; font-size: 14px; }
+        .highlight-text p { color: #94a3b8; font-size: 13px; margin-top: 4px; line-height: 1.5; }
+        .highlight-tag {
+            font-size: 11px; padding: 2px 8px; border-radius: 6px;
+            flex-shrink: 0; margin-top: 2px;
+        }
+        .htag-up { background: rgba(239,68,68,0.15); color: #f87171; }
+        .htag-down { background: rgba(34,197,94,0.15); color: #4ade80; }
+        .htag-alert { background: rgba(245,158,11,0.15); color: #fbbf24; }
+        .htag-info { background: rgba(59,130,246,0.15); color: #60a5fa; }
+
+        /* ========== 价格走势 ========== */
+        .price-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+            gap: 16px; margin-bottom: 20px;
+        }
+        .price-card {
+            background: #111827; border: 1px solid #1e293b; border-radius: 14px;
+            padding: 20px; transition: border-color 0.2s;
+        }
+        .price-card:hover { border-color: #334155; }
+        .price-card-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 14px;
+        }
+        .price-card-title { font-size: 15px; font-weight: 600; color: #e2e8f0; }
+        .price-card-sub { font-size: 11px; color: #64748b; }
+        .price-table { width: 100%; border-collapse: collapse; }
+        .price-table th {
+            text-align: left; font-size: 11px; color: #64748b; font-weight: 500;
+            padding: 6px 8px; border-bottom: 1px solid #1e293b;
+        }
+        .price-table td {
+            padding: 8px; font-size: 13px; color: #cbd5e1;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        .price-table tr:hover { background: rgba(255,255,255,0.02); }
+        .price-up { color: #f87171; font-weight: 600; }
+        .price-down { color: #4ade80; font-weight: 600; }
+        .price-flat { color: #64748b; }
+        .price-alert {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 11px; padding: 2px 8px; border-radius: 6px;
+            background: rgba(239,68,68,0.15); color: #f87171;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+        .chart-container { position: relative; height: 200px; margin-top: 14px; }
+
+        /* Manual update notice */
+        .manual-notice {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 11px; color: #64748b; margin-top: 10px;
+            padding: 8px 12px; background: rgba(255,255,255,0.02);
+            border-radius: 8px; border: 1px dashed #1e293b;
+        }
+
+        /* ========== 产业机会 ========== */
+        .oppo-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+        }
+        .oppo-card {
+            background: #111827; border: 1px solid #1e293b; border-radius: 14px;
+            padding: 20px; transition: all 0.2s;
+        }
+        .oppo-card:hover { border-color: #334155; transform: translateY(-2px); }
+        .oppo-card-header {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+        }
+        .oppo-icon {
+            width: 36px; height: 36px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; font-size: 18px;
+        }
+        .oppo-icon.distributor { background: rgba(59,130,246,0.15); }
+        .oppo-icon.server { background: rgba(168,85,247,0.15); }
+        .oppo-icon.price-alert { background: rgba(239,68,68,0.15); }
+        .oppo-icon.shortage { background: rgba(245,158,11,0.15); }
+        .oppo-card-title { font-size: 15px; font-weight: 600; color: #e2e8f0; }
+        .oppo-card-sub { font-size: 11px; color: #64748b; }
+        .oppo-list { list-style: none; }
+        .oppo-item {
+            padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 13px;
+        }
+        .oppo-item:last-child { border-bottom: none; }
+        .oppo-item-name { color: #cbd5e1; }
+        .oppo-item-tag {
+            font-size: 11px; padding: 2px 8px; border-radius: 6px;
+        }
+        .tag-buy { background: rgba(239,68,68,0.15); color: #f87171; }
+        .tag-watch { background: rgba(245,158,11,0.15); color: #fbbf24; }
+        .tag-strong { background: rgba(34,197,94,0.15); color: #4ade80; }
+
+        /* ========== 新闻 ========== */
+        .news-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 14px;
+        }
+        .news-card {
+            background: #111827; border: 1px solid #1e293b; border-radius: 12px;
+            padding: 18px; transition: all 0.2s; cursor: pointer;
+            text-decoration: none; color: inherit; display: block;
+        }
+        .news-card:hover { border-color: #3b82f6; transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59,130,246,0.1); }
+        .news-tag {
+            display: inline-block; padding: 3px 10px; border-radius: 10px;
+            font-size: 11px; font-weight: 500; margin-bottom: 8px;
+        }
+        .tag-market { background: rgba(59,130,246,0.15); color: #60a5fa; }
+        .tag-tech { background: rgba(168,85,247,0.15); color: #c084fc; }
+        .tag-policy { background: rgba(234,179,8,0.15); color: #facc15; }
+        .tag-company { background: rgba(34,197,94,0.15); color: #4ade80; }
+        .tag-hot { background: rgba(239,68,68,0.15); color: #f87171; }
+        .news-title {
+            font-size: 15px; font-weight: 600; color: #f1f5f9;
+            margin-bottom: 6px; line-height: 1.5;
+            display: -webkit-box; -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .news-desc {
+            font-size: 12px; color: #94a3b8; line-height: 1.6;
+            display: -webkit-box; -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 10px;
+        }
+        .news-meta {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 11px; color: #475569;
+        }
+        .loading {
+            text-align: center; padding: 40px 20px; color: #64748b;
+        }
+        .loading-spinner {
+            display: inline-block; width: 28px; height: 28px;
+            border: 3px solid #1e293b; border-top-color: #3b82f6;
+            border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 10px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Source Links */
+        .source-links { max-width: 1400px; margin: 0 auto; padding: 0 24px 16px; }
+        .source-link-list { display: flex; gap: 10px; flex-wrap: wrap; }
+        .source-link {
+            font-size: 12px; color: #60a5fa; text-decoration: none;
+            padding: 5px 12px; background: rgba(59,130,246,0.08);
+            border-radius: 8px; transition: all 0.2s; border: 1px solid rgba(59,130,246,0.15);
+        }
+        .source-link:hover { background: rgba(59,130,246,0.15); border-color: rgba(59,130,246,0.3); }
+
+        .footer {
+            text-align: center; padding: 20px; color: #334155; font-size: 11px;
+            border-top: 1px solid #111827; margin-top: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .price-grid, .oppo-grid { grid-template-columns: 1fr; }
+            .news-grid { grid-template-columns: 1fr; }
+            .header-inner { flex-direction: column; gap: 10px; text-align: center; }
+            .header-right { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-inner">
+        <div class="logo">
+            <div class="logo-icon">🔬</div>
+            <div>
+                <h1>半导体产业每日情报站</h1>
+                <div class="logo-sub">价格走势 · 行业新闻 · 产业机会</div>
+            </div>
+        </div>
+        <div class="header-right">
+            <span class="date-info" id="currentDate"></span>
+            <button class="refresh-btn" onclick="init()">🔄 刷新</button>
+        </div>
+    </div>
+</div>
+
+<div class="nav">
+    <button class="nav-btn active" onclick="switchTab('all', this)">📋 全部</button>
+    <button class="nav-btn" onclick="switchTab('highlights', this)">⭐ 今日要点</button>
+    <button class="nav-btn" onclick="switchTab('price', this)">📈 价格走势</button>
+    <button class="nav-btn" onclick="switchTab('opportunity', this)">🎯 产业机会</button>
+    <button class="nav-btn" onclick="switchTab('news', this)">📰 行业新闻</button>
+</div>
+
+<div class="container" id="mainContainer">
+
+    <!-- ===== 今日要点 ===== -->
+    <div class="section tab-section" data-tab="highlights">
+        <div class="highlights">
+            <div class="highlights-title"><span>⭐</span> 今日产业五大要点</div>
+            <ul class="highlight-list" id="highlightList">
+                <li class="highlight-item">
+                    <div class="highlight-num n1">1</div>
+                    <div class="highlight-text">
+                        <strong>企业级SSD全线涨价，PCIe4.0 512GB单周涨幅达18.6%</strong>
+                        <p>受AI服务器需求拉动，企业级SSD价格持续攀升，与消费级SSD形成"冰火两重天"格局。下半年存储价格预计将进一步上涨。</p>
+                    </div>
+                    <span class="highlight-tag htag-up">涨价</span>
+                </li>
+                <li class="highlight-item">
+                    <div class="highlight-num n2">2</div>
+                    <div class="highlight-text">
+                        <strong>DDR5 RDIMM 96GB合约价环比上涨6%，服务器内存需求旺盛</strong>
+                        <p>数据中心建设加速，DDR5服务器内存合约价连续三个月上涨。DDR5 RDIMM 64GB价格已达1,380美元。</p>
+                    </div>
+                    <span class="highlight-tag htag-up">涨价</span>
+                </li>
+                <li class="highlight-item">
+                    <div class="highlight-num n3">3</div>
+                    <div class="highlight-text">
+                        <strong>LPDDR5X全线涨价，64Gb单周涨幅8.57%</strong>
+                        <p>手机端LPDDR5X需求回暖，叠加AI终端拉动，移动存储芯片价格进入上升通道。</p>
+                    </div>
+                    <span class="highlight-tag htag-up">涨价</span>
+                </li>
+                <li class="highlight-item">
+                    <div class="highlight-num n4">4</div>
+                    <div class="highlight-text">
+                        <strong>消费级SSD持续走弱，PCIe3.0 512GB周跌8.5%</strong>
+                        <p>渠道SSD供过于求，消费级存储价格承压。但企业级与消费级价差持续扩大，预示需求结构转变。</p>
+                    </div>
+                    <span class="highlight-tag htag-down">下跌</span>
+                </li>
+                <li class="highlight-item">
+                    <div class="highlight-num n5">5</div>
+                    <div class="highlight-text">
+                        <strong>台积电3nm产能满载，AI芯片订单排至2027年</strong>
+                        <p>英伟达、苹果等大客户订单饱满，先进制程产能持续紧张。全球半导体设备市场突破1,200亿美元。</p>
+                    </div>
+                    <span class="highlight-tag htag-alert">关注</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ===== 价格走势 ===== -->
+    <div class="section tab-section" data-tab="price">
+        <div class="section-header">
+            <span class="section-icon">📈</span>
+            <span class="section-title">存储芯片价格走势</span>
+            <a href="https://www.chinaflashmarket.com/" target="_blank" class="section-link">数据来源：中国闪存市场 →</a>
+        </div>
+
+        <div class="price-grid">
+            <!-- DRAM 现货价 -->
+            <div class="price-card">
+                <div class="price-card-header">
+                    <div>
+                        <div class="price-card-title">💾 DRAM 现货价格</div>
+                        <div class="price-card-sub">更新日期：2026-06-30</div>
+                    </div>
+                </div>
+                <table class="price-table">
+                    <thead><tr><th>产品</th><th>价格(USD)</th><th>涨跌</th></tr></thead>
+                    <tbody>
+                        <tr><td>DDR4 16Gb 3200</td><td>$50.00</td><td class="price-flat">持平</td></tr>
+                        <tr><td>DDR4 8Gb 3200</td><td>$18.00</td><td class="price-flat">持平</td></tr>
+                        <tr><td>DDR5 24Gb Major</td><td>$40.00</td><td class="price-flat">持平</td></tr>
+                        <tr><td>DDR5 16Gb Major</td><td>$35.00</td><td class="price-flat">持平</td></tr>
+                        <tr><td>DDR5 16Gb eTT</td><td>$22.00</td><td class="price-flat">持平</td></tr>
+                    </tbody>
+                </table>
+                <div class="chart-container"><canvas id="dramChart"></canvas></div>
+            </div>
+
+            <!-- DDR5 服务器合约价 -->
+            <div class="price-card">
+                <div class="price-card-header">
+                    <div>
+                        <div class="price-card-title">🖥️ DDR5 服务器合约价</div>
+                        <div class="price-card-sub">2026年6月</div>
+                    </div>
+                    <span class="price-alert">🔥 持续上涨</span>
+                </div>
+                <table class="price-table">
+                    <thead><tr><th>产品</th><th>价格(USD)</th><th>环比</th></tr></thead>
+                    <tbody>
+                        <tr><td>DDR5 RDIMM 32GB</td><td>$730</td><td class="price-up">+2%</td></tr>
+                        <tr><td>DDR5 RDIMM 64GB</td><td>$1,380</td><td class="price-up">+2%</td></tr>
+                        <tr><td>DDR5 RDIMM 96GB</td><td>$2,310</td><td class="price-up">+6%</td></tr>
+                    </tbody>
+                </table>
+                <div class="chart-container"><canvas id="rdimmChart"></canvas></div>
+            </div>
+
+            <!-- 企业级SSD -->
+            <div class="price-card">
+                <div class="price-card-header">
+                    <div>
+                        <div class="price-card-title">🏢 企业级SSD价格</div>
+                        <div class="price-card-sub">更新日期：2026-06-30</div>
+                    </div>
+                    <span class="price-alert">🔥 大幅上涨</span>
+                </div>
+                <table class="price-table">
+                    <thead><tr><th>产品</th><th>价格(USD)</th><th>周涨跌</th></tr></thead>
+                    <tbody>
+                        <tr><td>PCIe 3.0 256GB</td><td>$75</td><td class="price-up">+10.29%</td></tr>
+                        <tr><td>PCIe 3.0 512GB</td><td>$128</td><td class="price-up">+11.30%</td></tr>
+                        <tr><td>PCIe 3.0 1TB</td><td>$200</td><td class="price-up">+5.26%</td></tr>
+                        <tr><td>PCIe 4.0 512GB</td><td>$140</td><td class="price-up">+18.64%</td></tr>
+                        <tr><td>PCIe 4.0 1TB</td><td>$230</td><td class="price-up">+15.00%</td></tr>
+                        <tr><td>PCIe 4.0 2TB</td><td>$400</td><td class="price-up">+5.26%</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 消费级SSD -->
+            <div class="price-card">
+                <div class="price-card-header">
+                    <div>
+                        <div class="price-card-title">💿 消费级SSD价格</div>
+                        <div class="price-card-sub">更新日期：2026-06-30</div>
+                    </div>
+                    <span style="font-size:11px;padding:2px 8px;border-radius:6px;background:rgba(34,197,94,0.15);color:#4ade80;">持续下跌</span>
+                </div>
+                <table class="price-table">
+                    <thead><tr><th>产品</th><th>价格(USD)</th><th>周涨跌</th></tr></thead>
+                    <tbody>
+                        <tr><td>PCIe 3.0 256GB</td><td>$38</td><td class="price-down">-7.32%</td></tr>
+                        <tr><td>PCIe 3.0 512GB</td><td>$75</td><td class="price-down">-8.54%</td></tr>
+                        <tr><td>PCIe 3.0 1TB</td><td>$116</td><td class="price-down">-6.45%</td></tr>
+                        <tr><td>PCIe 4.0 512GB</td><td>$80</td><td class="price-down">-4.76%</td></tr>
+                        <tr><td>PCIe 4.0 1TB</td><td>$130</td><td class="price-down">-7.14%</td></tr>
+                        <tr><td>PCIe 4.0 2TB</td><td>$250</td><td class="price-down">-3.85%</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- LPDDR5X -->
+            <div class="price-card">
+                <div class="price-card-header">
+                    <div>
+                        <div class="price-card-title">📱 LPDDR5X 移动端价格</div>
+                        <div class="price-card-sub">更新日期：2026-06-30</div>
+                    </div>
+                    <span class="price-alert">🔥 涨价中</span>
+                </div>
+                <table class="price-table">
+                    <thead><tr><th>产品</th><th>价格(USD)</th><th>周涨跌</th></tr></thead>
+                    <tbody>
+                        <tr><td>LPDDR5X 128Gb</td><td>$235</td><td class="price-up">+4.44%</td></tr>
+                        <tr><td>LPDDR5X 96Gb</td><td>$175</td><td class="price-up">+4.17%</td></tr>
+                        <tr><td>LPDDR5X 64Gb</td><td>$114</td><td class="price-up">+8.57%</td></tr>
+                    </tbody>
+                </table>
+                <div class="chart-container"><canvas id="lpddrChart"></canvas></div>
+            </div>
+
+            <!-- NAND Flash Wafer -->
+            <div class="price-card">
+                <div class="price-card-header">
+                    <div>
+                        <div class="price-card-title">🧱 NAND Flash Wafer 价格</div>
+                        <div class="price-card-sub">更新日期：2026-07-06</div>
+                    </div>
+                </div>
+                <table class="price-table">
+                    <thead><tr><th>产品</th><th>价格(USD)</th><th>涨跌</th></tr></thead>
+                    <tbody>
+                        <tr><td>1Tb QLC</td><td>$26.50</td><td class="price-flat">持平</td></tr>
+                        <tr><td>1Tb TLC</td><td>$29.00</td><td class="price-flat">持平</td></tr>
+                        <tr><td>512Gb TLC</td><td>$22.50</td><td class="price-flat">持平</td></tr>
+                        <tr><td>256Gb TLC</td><td>$11.00</td><td class="price-flat">持平</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 阻容感 PCB 手动更新区 -->
+        <div class="section-header" style="margin-top: 8px;">
+            <span class="section-icon">🔧</span>
+            <span class="section-title">阻容感 / PCB 价格行情</span>
+            <span class="section-badge">手动更新</span>
+        </div>
+        <div class="price-grid">
+            <div class="price-card">
+                <div class="price-card-header">
+                    <div>
+                        <div class="price-card-title">⚡ MLCC 贴片电容</div>
+                        <div class="price-card-sub">更新日期：2026-07-07</div>
+                    </div>
+                </div>
+                <table class="price-table">
+                    <thead><tr><th>型号规格</th><th>参考价</th><th>趋势</th></tr></thead>
+                    <tbody>
+                        <tr><td>0201 100nF X5R 16V</td><td>¥0.008/颗</td><td class="price-flat">平稳</td></tr>
+                        <tr><td>0402 1uF X5R 10V</td><td>¥0.015/颗</td><td class="price-flat">平稳</td></tr>
+                        <tr><td>0603 10uF X5R 10V</td><td>¥0.05/颗</td><td class="price-up">微涨</td></tr>
+                        <tr><td>0805 22uF X5R 6.3V</td><td>¥0.12/颗</td><td class="price-flat">平稳</td></tr>
+                    </tbody>
+                </table>
+                <div class="manual-notice">📝 价格来源于分销商参考报价，需定期手动更新</div>
+            </div>
+
+            <div class="price-card">
+                <div class="price-card-header">
+                    <div>
+                        <div class="price-card-title">🔌 贴片电阻</div>
+                        <div class="price-card-sub">更新日期：2026-07-07</div>
+                    </div>
+                </div>
+                <table class="price-table">
+                    <thead><tr><th>型号规格</th><th>参考价</th><th>趋势</th></tr></thead>
+                    <tbody>
+                        <tr><td>0402 10KΩ ±1%</td><td>¥0.002/颗</td><td class="price-flat">平稳</td></tr>
+                        <tr><td>0603 100Ω ±1%</td><td>¥0.003/颗</td><td class="price-flat">平稳</td></tr>
+                        <tr><td>0805 4.7KΩ ±1%</td><td>¥0.004/颗</td><td class="price-flat">平稳</td></tr>
+                    </tbody>
+                </table>
+                <div class="manual-notice">📝 价格来源于分销商参考报价，需定期手动更新</div>
+            </div>
+
+            <div class="price-card">
+                <div class="price-card-header">
+                    <div>
+                        <div class="price-card-title">🧲 贴片电感</div>
+                        <div class="price-card-sub">更新日期：2026-07-07</div>
+                    </div>
+                </div>
+                <table class="price-table">
+                    <thead><tr><th>型号规格</th><th>参考价</th><th>趋势</th></tr></thead>
+                    <tbody>
+                        <tr><td>0402 1uH ±5%</td><td>¥0.02/颗</td><td class="price-flat">平稳</td></tr>
+                        <tr><td>0603 4.7uH ±5%</td><td>¥0.04/颗</td><td class="price-flat">平稳</td></tr>
+                        <tr><td>功率电感 10uH 3A</td><td>¥0.35/颗</td><td class="price-up">微涨</td></tr>
+                    </tbody>
+                </table>
+                <div class="manual-notice">📝 价格来源于分销商参考报价，需定期手动更新</div>
+            </div>
+
+            <div class="price-card">
+                <div class="price-card-header">
+                    <div>
+                        <div class="price-card-title">📋 PCB 板材/覆铜板</div>
+                        <div class="price-card-sub">更新日期：2026-07-07</div>
+                    </div>
+                </div>
+                <table class="price-table">
+                    <thead><tr><th>类型</th><th>参考价</th><th>趋势</th></tr></thead>
+                    <tbody>
+                        <tr><td>FR-4 双面板 (1.6mm)</td><td>¥180/㎡</td><td class="price-flat">平稳</td></tr>
+                        <tr><td>FR-4 四层板</td><td>¥350/㎡</td><td class="price-flat">平稳</td></tr>
+                        <tr><td>HDI板</td><td>¥600-1200/㎡</td><td class="price-up">微涨</td></tr>
+                        <tr><td>高频板 (Rogers)</td><td>¥1500+/㎡</td><td class="price-up">供应偏紧</td></tr>
+                    </tbody>
+                </table>
+                <div class="manual-notice">📝 价格来源于行业参考报价，需定期手动更新</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 产业机会 ===== -->
+    <div class="section tab-section" data-tab="opportunity">
+        <div class="section-header">
+            <span class="section-icon">🎯</span>
+            <span class="section-title">产业机会与供应链动态</span>
+        </div>
+        <div class="oppo-grid">
+            <!-- 电子元器件代理商 -->
+            <div class="oppo-card">
+                <div class="oppo-card-header">
+                    <div class="oppo-icon distributor">🏪</div>
+                    <div>
+                        <div class="oppo-card-title">电子元器件代理商</div>
+                        <div class="oppo-card-sub">AI服务器需求拉动，代理商业绩弹性大</div>
+                    </div>
+                </div>
+                <ul class="oppo-list">
+                    <li class="oppo-item"><span class="oppo-item-name">大联大 (WPG)</span><span class="oppo-item-tag tag-strong">业绩强劲</span></li>
+                    <li class="oppo-item"><span class="oppo-item-name">文晔科技 (WT Micro)</span><span class="oppo-item-tag tag-strong">AI芯片代理增长</span></li>
+                    <li class="oppo-item"><span class="oppo-item-name">中电港 (CEC Port)</span><span class="oppo-item-tag tag-watch">国产替代受益</span></li>
+                    <li class="oppo-item"><span class="oppo-item-name">深圳华强</span><span class="oppo-item-tag tag-watch">关注消费电子复苏</span></li>
+                    <li class="oppo-item"><span class="oppo-item-name">力源信息</span><span class="oppo-item-tag tag-watch">半导体分销</span></li>
+                    <li class="oppo-item"><span class="oppo-item-name">韦尔股份 (代理业务)</span><span class="oppo-item-tag tag-strong">CIS+代理双轮驱动</span></li>
+                </ul>
+            </div>
+
+            <!-- AI服务器产业链 -->
+            <div class="oppo-card">
+                <div class="oppo-card-header">
+                    <div class="oppo-icon server">🖥️</div>
+                    <div>
+                        <div class="oppo-card-title">AI 服务器产业链</div>
+                        <div class="oppo-card-sub">算力需求爆发，全产业链受益</div>
+                    </div>
+                </div>
+                <ul class="oppo-list">
+                    <li class="oppo-item"><span class="oppo-item-name">英伟达 (GPU)</span><span class="oppo-item-tag tag-strong">核心算力芯片</span></li>
+                    <li class="oppo-item"><span class="oppo-item-name">SK海力士 (HBM)</span><span class="oppo-item-tag tag-buy">供不应求</span></li>
+                    <li class="oppo-item"><span class="oppo-item-name">工业富联 (代工)</span><span class="oppo-item-tag tag-strong">服务器组装龙头</span></li>
+                    <li class="oppo-item"><span class="oppo-item-name">沪电股份 (PCB)</span><span class="oppo-item-tag tag-strong">高端服务器PCB</span></li>
+                    <li class="oppo-item"><span class="oppo-item-name">中际旭创 (光模块)</span><span class="oppo-item-tag tag-buy">800G/1.6T放量</span></li>
+                    <li class="oppo-item"><span class="oppo-item-name">英维克 (散热)</span><span class="oppo-item-tag tag-watch">液冷渗透率提升</span></li>
+                    <li class="oppo-item"><span class="oppo-item-name">澜起科技 (接口芯片)</span><span class="oppo-item-tag tag-strong">DDR5内存接口</span></li>
+                </ul>
+            </div>
+
+            <!-- 涨价预警 -->
+            <div class="oppo-card">
+                <div class="oppo-card-header">
+                    <div class="oppo-icon price-alert">🚨</div>
+                    <div>
+                        <div class="oppo-card-title">涨价 / 缺货预警</div>
+                        <div class="oppo-card-sub">建议关注备货节奏</div>
+                    </div>
+                </div>
+                <ul class="oppo-list">
+                    <li class="oppo-item"><span class="oppo-item-name">🔥 企业级SSD (PCIe4.0)</span><span class="oppo-item-tag tag-buy">周涨15-18%，建议备货</span></li>
+                    <li class="oppo-item"><span class="oppo-item-name">🔥 DDR5 RDIMM 96GB</span><span class="oppo-item-tag tag-buy">合约价+6%，持续上涨</span></li>
+                    <li class="oppo-item"><span class="oppo-item-name">🔥 LPDDR5X</span><span class="oppo-item-tag tag-buy">全线涨价，手机备货期</span></li>
+                    <li class="oppo-item"><span class="oppo-item-name">⚠️ HBM3e</span><span class="oppo-item-tag tag-buy">极度紧缺，交期延长</span></li>
+                    <li class="oppo-item"><span class="oppo-item-name">⚠️ 高频覆铜板</span><span class="oppo-item-tag tag-watch">供应偏紧，关注交期</span></li>
+                    <li class="oppo-item"><span class="oppo-item-name">📉 消费级SSD</span><span class="oppo-item-tag tag-watch">持续下跌，暂不急备货</span></li>
+                    <li class="oppo-item"><span class="oppo-item-name">📉 DDR4模组</span><span class="oppo-item-tag tag-watch">需求萎缩，价格走弱</span></li>
+                </ul>
+            </div>
+
+            <!-- 备货建议 -->
+            <div class="oppo-card">
+                <div class="oppo-card-header">
+                    <div class="oppo-icon shortage">📦</div>
+                    <div>
+                        <div class="oppo-card-title">备货 / 供应链建议</div>
+                        <div class="oppo-card-sub">基于当前供需格局的判断</div>
+                    </div>
+                </div>
+                <ul class="oppo-list">
+                    <li class="oppo-item"><span class="oppo-item-name">企业级存储</span><span class="oppo-item-tag tag-buy">建议提前2-3个月锁单</span></li>
+                    <li class="oppo-item"><span class="oppo-item-name">DDR5服务器内存</span><span class="oppo-item-tag tag-buy">交期延长，尽早下单</span></li>
+                    <li class="oppo-item"><span class="oppo-item-name">高端光模块</span><span class="oppo-item-tag tag-buy">800G产能紧张</span></li>
+                    <li class="oppo-item"><span class="oppo-item-name">MLCC高端规格</span><span class="oppo-item-tag tag-watch">关注AI终端拉动</span></li>
+                    <li class="oppo-item"><span class="oppo-item-name">消费级存储</span><span class="oppo-item-tag tag-strong">库存充足，按需采购</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 行业新闻 ===== -->
+    <div class="section tab-section" data-tab="news">
+        <div class="section-header">
+            <span class="section-icon">📰</span>
+            <span class="section-title">行业新闻</span>
+            <span class="section-badge" id="newsCount">-</span>
+        </div>
+        <div id="newsContainer">
+            <div class="loading"><div class="loading-spinner"></div><div>正在加载新闻...</div></div>
+        </div>
+    </div>
+</div>
+
+<div class="source-links">
+    <div style="font-size:12px;color:#475569;margin-bottom:8px;">📡 推荐信息源</div>
+    <div class="source-link-list">
+        <a href="https://www.chinaflashmarket.com/" target="_blank" class="source-link">中国闪存市场</a>
+        <a href="https://www.jiweinews.com/" target="_blank" class="source-link">集微网</a>
+        <a href="https://www.icsmart.cn/" target="_blank" class="source-link">半导体行业观察</a>
+        <a href="https://www.eet-china.com/" target="_blank" class="source-link">电子工程专辑</a>
+        <a href="https://www.semi.org/en" target="_blank" class="source-link">SEMI</a>
+        <a href="https://36kr.com/" target="_blank" class="source-link">36氪</a>
+        <a href="https://www.trendforce.com/" target="_blank" class="source-link">TrendForce</a>
+    </div>
+</div>
+
+<div class="footer">
+    半导体产业每日情报站 · 价格数据来源于中国闪存市场 · 新闻来源于公开RSS · 仅供学习参考
+</div>
+
+<script>
+// ===== Tab Switching =====
+function switchTab(tab, btn) {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab-section').forEach(s => {
+        s.style.display = (tab === 'all' || s.dataset.tab === tab) ? 'block' : 'none';
+    });
+}
+
+// ===== Date =====
+function setDate() {
+    const now = new Date();
+    document.getElementById('currentDate').textContent =
+        now.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+}
+
+// ===== Charts =====
+function initCharts() {
+    Chart.defaults.color = '#64748b';
+    Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+    Chart.defaults.font.family = '-apple-system, PingFang SC, Microsoft YaHei, sans-serif';
+
+    // DRAM Price Chart
+    new Chart(document.getElementById('dramChart'), {
+        type: 'line',
+        data: {
+            labels: ['1月','2月','3月','4月','5月','6月'],
+            datasets: [
+                { label: 'DDR5 16Gb', data: [38,37,36,35.5,35,35], borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.4, pointRadius: 3 },
+                { label: 'DDR4 8Gb', data: [20,19.5,19,18.5,18,18], borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.1)', fill: true, tension: 0.4, pointRadius: 3 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'top', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } } },
+            scales: { y: { grid: { color: 'rgba(255,255,255,0.03)' } }, x: { grid: { display: false } } }
+        }
+    });
+
+    // RDIMM Price Chart
+    new Chart(document.getElementById('rdimmChart'), {
+        type: 'bar',
+        data: {
+            labels: ['1月','2月','3月','4月','5月','6月'],
+            datasets: [
+                { label: '32GB', data: [680,690,700,710,720,730], backgroundColor: 'rgba(59,130,246,0.6)', borderRadius: 4 },
+                { label: '64GB', data: [1250,1280,1300,1320,1350,1380], backgroundColor: 'rgba(139,92,246,0.6)', borderRadius: 4 },
+                { label: '96GB', data: [2050,2100,2150,2200,2250,2310], backgroundColor: 'rgba(244,114,182,0.6)', borderRadius: 4 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'top', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } } },
+            scales: { y: { grid: { color: 'rgba(255,255,255,0.03)' } }, x: { grid: { display: false } } }
+        }
+    });
+
+    // LPDDR5X Price Chart
+    new Chart(document.getElementById('lpddrChart'), {
+        type: 'line',
+        data: {
+            labels: ['1月','2月','3月','4月','5月','6月'],
+            datasets: [
+                { label: '128Gb', data: [210,215,218,222,228,235], borderColor: '#f472b6', backgroundColor: 'rgba(244,114,182,0.1)', fill: true, tension: 0.4, pointRadius: 3 },
+                { label: '64Gb', data: [95,98,100,103,108,114], borderColor: '#fb923c', backgroundColor: 'rgba(251,146,60,0.1)', fill: true, tension: 0.4, pointRadius: 3 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'top', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } } },
+            scales: { y: { grid: { color: 'rgba(255,255,255,0.03)' } }, x: { grid: { display: false } } }
+        }
+    });
+}
+
+// ===== News =====
+const CORS_PROXIES = [
+    'https://api.allorigins.win/raw?url=',
+    'https://corsproxy.io/?',
+    'https://api.codetabs.com/v1/proxy?quest='
+];
+const RSS_SOURCES = [
+    { name: '集微网', url: 'https://rsshub.app/jiweinews/news', icon: '📰' },
+    { name: '半导体行业观察', url: 'https://rsshub.app/icsmart/semi', icon: '🔍' },
+    { name: '电子工程专辑', url: 'https://rsshub.app/eet-china/news', icon: '💡' },
+    { name: '36氪-芯片', url: 'https://rsshub.app/36kr/search/articles/芯片', icon: '🚀' }
+];
+
+let allNewsData = [];
+
+async function fetchWithProxy(url) {
+    for (const proxy of CORS_PROXIES) {
+        try {
+            const r = await fetch(proxy + encodeURIComponent(url), { signal: AbortSignal.timeout(8000) });
+            if (r.ok) return await r.text();
+        } catch {}
+    }
+    return null;
+}
+
+async function fetchRSS(source) {
+    const text = await fetchWithProxy(source.url);
+    if (!text) return [];
+    try {
+        const xml = new DOMParser().parseFromString(text, 'text/xml');
+        return Array.from(xml.querySelectorAll('item')).slice(0, 8).map((item, i) => {
+            const title = item.querySelector('title')?.textContent || '无标题';
+            const desc = (item.querySelector('description')?.textContent || '').replace(/<[^>]*>/g, '').substring(0, 150);
+            const link = item.querySelector('link')?.textContent || '#';
+            const pubDate = item.querySelector('pubDate')?.textContent || '';
+            let cat = 'hot';
+            if (/市场|营收|份额|出货/.test(title)) cat = 'market';
+            else if (/技术|工艺|制程|架构|EDA/.test(title)) cat = 'tech';
+            else if (/政策|法规|补贴|管制|出口/.test(title)) cat = 'policy';
+            else if (/公司|产能|良率|发布|扩产/.test(title)) cat = 'company';
+            return { id: `${source.name}-${i}`, title, desc, link, source: source.name, icon: source.icon, category: cat, pubDate, time: fmtTime(pubDate) };
+        });
+    } catch { return []; }
+}
+
+function fmtTime(d) {
+    if (!d) return '刚刚';
+    try {
+        const m = Math.floor((Date.now() - new Date(d)) / 60000);
+        if (m < 60) return `${m}分钟前`;
+        if (m < 1440) return `${Math.floor(m/60)}小时前`;
+        return `${Math.floor(m/1440)}天前`;
+    } catch { return '刚刚'; }
+}
+
+function getCatTag(c) {
+    return { hot:{t:'🔥 热点',c:'tag-hot'}, market:{t:'📊 市场',c:'tag-market'}, tech:{t:'⚙️ 技术',c:'tag-tech'}, policy:{t:'📋 政策',c:'tag-policy'}, company:{t:'🏢 企业',c:'tag-company'} }[c] || {t:'🔥 热点',c:'tag-hot'};
+}
+
+function mockNews() {
+    const now = Date.now();
+    return [
+        { t: '台积电3nm产能满载，AI芯片订单排至2027年', d: '受AI芯片需求激增影响，台积电3nm先进制程产能持续满载，主要客户苹果和英伟达的订单已排至2027年。', s: '集微网', i: '📰', c: 'hot', h: 2 },
+        { t: '中芯国际Q2营收超预期，成熟制程需求强劲', d: '中芯国际发布2026年Q2财报，营收达22.5亿美元，同比增长18%，超出市场预期。', s: '半导体行业观察', i: '🔍', c: 'company', h: 3 },
+        { t: '英伟达H200供不应求，数据中心建设加速', d: '英伟达最新一代AI加速卡H200全球供不应求，分析师预计2026年AI芯片市场规模突破800亿美元。', s: '36氪', i: '🚀', c: 'market', h: 4 },
+        { t: 'ASML High-NA EUV光刻机交付量创新高', d: 'ASML宣布2026年上半年High-NA EUV光刻机交付12台，创历史新高，单台售价超3.5亿欧元。', s: '电子工程专辑', i: '💡', c: 'tech', h: 5 },
+        { t: '国务院发布集成电路产业新一轮扶持政策', d: '国务院办公厅印发新政，在税收优惠、人才引进、研发补贴等方面加大支持力度，有效期至2030年。', s: '集微网', i: '📰', c: 'policy', h: 5 },
+        { t: '华为海思新一代手机芯片流片成功', d: '华为海思新一代旗舰手机SoC已完成流片，采用先进制程，预计年底发布。', s: '半导体行业观察', i: '🔍', c: 'hot', h: 6 },
+        { t: '全球半导体设备市场突破1200亿美元', d: 'SEMI报告2026年全球半导体设备市场预计达1250亿美元，同比增长15%。', s: '电子工程专辑', i: '💡', c: 'market', h: 7 },
+        { t: '长江存储232层NAND闪存良率大幅提升', d: '长江存储232层3D NAND良率已提升至90%以上，计划下半年扩大产能。', s: '集微网', i: '📰', c: 'company', h: 8 },
+        { t: 'RISC-V架构在中国市场渗透率持续提升', d: '2026上半年中国RISC-V芯片出货量同比增长超60%，在IoT、汽车电子等领域应用扩大。', s: '36氪', i: '🚀', c: 'tech', h: 8 },
+        { t: '美国商务部更新半导体出口管制清单', d: 'BIS更新出口管制清单，新增多项先进半导体技术和设备出口限制，加速国产替代进程。', s: '半导体行业观察', i: '🔍', c: 'policy', h: 9 },
+        { t: '中国半导体自给率首次突破30%', d: '中国半导体行业协会数据，2026上半年芯片自给率首次突破30%，较去年同期提升5个百分点。', s: '集微网', i: '📰', c: 'hot', h: 12 },
+    ].map((x, i) => ({ id: `m${i}`, title: x.t, desc: x.d, link: '#', source: x.s, icon: x.i, category: x.c, pubDate: new Date(now - x.h*3600000).toISOString(), time: `${x.h}小时前` }));
+}
+
+function renderNews(items) {
+    const c = document.getElementById('newsContainer');
+    if (!items.length) { c.innerHTML = '<div class="loading">暂无新闻</div>'; return; }
+    c.innerHTML = `<div class="news-grid">${items.map(n => {
+        const t = getCatTag(n.category);
+        return `<a href="${n.link}" target="_blank" class="news-card">
+            <span class="news-tag ${t.c}">${t.t}</span>
+            <div class="news-title">${n.title}</div>
+            <div class="news-desc">${n.desc}</div>
+            <div class="news-meta"><span>${n.icon} ${n.source}</span><span>${n.time}</span></div>
+        </a>`;
+    }).join('')}</div>`;
+}
+
+async function loadNews() {
+    try {
+        const results = await Promise.all(RSS_SOURCES.map(s => fetchRSS(s)));
+        let news = results.flat();
+        if (!news.length) news = mockNews();
+        news.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+        allNewsData = news;
+    } catch { allNewsData = mockNews(); }
+    document.getElementById('newsCount').textContent = `${allNewsData.length} 条`;
+    renderNews(allNewsData);
+}
+
+// ===== Init =====
+function init() {
+    setDate();
+    initCharts();
+    loadNews();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
