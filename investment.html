@@ -7,434 +7,374 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:#f8fafc;color:#1e293b;min-height:100vh}
-.header{background:#fff;border-bottom:1px solid #e2e8f0;padding:16px 0;position:sticky;top:0;z-index:100;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
-.header-inner{max-width:1400px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center}
-.logo{display:flex;align-items:center;gap:12px}
-.logo-icon{width:42px;height:42px;background:linear-gradient(135deg,#f59e0b,#ef4444);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 15px rgba(245,158,11,0.2)}
-.logo h1{font-size:20px;font-weight:700;color:#1e293b}
-.logo-sub{font-size:11px;color:#64748b;margin-top:2px}
-.header-right{display:flex;align-items:center;gap:12px}
-.date-info{color:#64748b;font-size:12px}
-.nav{max-width:1400px;margin:0 auto;padding:10px 24px;display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid #e2e8f0;background:#fff}
-.nav-btn{padding:7px 14px;border-radius:8px;border:1px solid transparent;background:transparent;color:#64748b;cursor:pointer;font-size:13px;transition:.2s}
-.nav-btn:hover{background:#f1f5f9;color:#475569}
-.nav-btn.active{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
-.container{max-width:1400px;margin:0 auto;padding:20px 24px 40px}
-.section{margin-bottom:28px}
-.section-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #e2e8f0}
-.section-icon{font-size:18px}
-.section-title{font-size:17px;font-weight:600;color:#0f172a}
-.section-badge{font-size:11px;color:#64748b;background:#f1f5f9;padding:3px 10px;border-radius:10px;margin-left:auto}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:#f8fafc;color:#1e293b;min-height:100vh;line-height:1.6}
 
-/* Price-Stock Mapping */
-.mapping-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
-.mapping-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
-.mapping-card:hover{border-color:#cbd5e1;box-shadow:0 4px 12px rgba(0,0,0,0.06)}
-.mapping-card .mc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.mapping-card .mc-cat{font-size:11px;color:#64748b;background:#f1f5f9;padding:2px 8px;border-radius:6px}
-.mapping-card .mc-signal{font-size:11px;padding:2px 8px;border-radius:6px;font-weight:600}
-.signal-up{background:#fef2f2;color:#dc2626}
-.signal-down{background:#f0fdf4;color:#16a34a}
-.signal-flat{background:#f8fafc;color:#64748b}
-.signal-warn{background:#fffbeb;color:#d97706}
-.mapping-card .mc-title{font-size:14px;font-weight:600;color:#0f172a;margin-bottom:6px}
-.mapping-card .mc-price{font-size:12px;color:#64748b;margin-bottom:8px}
-.mapping-card .mc-stocks{display:flex;flex-wrap:wrap;gap:6px}
-.stock-tag{font-size:11px;padding:3px 8px;border-radius:6px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;cursor:pointer;transition:.15s}
-.stock-tag:hover{background:#dbeafe;color:#1d4ed8}
+/* Header */
+.hd{background:#fff;border-bottom:1px solid #e2e8f0;padding:14px 0;position:sticky;top:0;z-index:100;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.hd-in{max-width:1440px;margin:0 auto;padding:0 28px;display:flex;justify-content:space-between;align-items:center}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-ic{width:38px;height:38px;background:linear-gradient(135deg,#f59e0b,#ef4444);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 2px 8px rgba(245,158,11,0.2)}
+.logo h1{font-size:18px;font-weight:700;color:#0f172a}
+.logo-sub{font-size:10px;color:#94a3b8}
+.hd-r{font-size:11px;color:#64748b}
 
-/* Stock Pool Table */
-.stock-table-wrap{overflow-x:auto;background:#fff;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
-.stock-table{width:100%;border-collapse:collapse;font-size:12px}
-.stock-table thead th{background:#f8fafc;padding:10px 12px;text-align:right;font-weight:600;color:#64748b;font-size:11px;white-space:nowrap;border-bottom:1px solid #e2e8f0;position:sticky;top:0}
-.stock-table thead th:first-child{text-align:left}
-.stock-table tbody td{padding:10px 12px;text-align:right;border-bottom:1px solid #f1f5f9;white-space:nowrap}
-.stock-table tbody td:first-child{text-align:left;font-weight:500}
-.stock-table tbody tr:hover{background:#f8fafc}
-.stock-table .up{color:#dc2626}.stock-table .down{color:#16a34a}.stock-table .flat{color:#94a3b8}
-.stock-table .stk-name{color:#0f172a;font-weight:600}
-.stock-table .stk-code{color:#94a3b8;font-size:10px}
-.stock-table .stk-market{font-size:9px;padding:1px 5px;border-radius:4px;margin-left:4px}
-.market-a{background:#fef2f2;color:#dc2626}
-.market-hk{background:#fffbeb;color:#d97706}
-.market-us{background:#eff6ff;color:#2563eb}
-.market-kr{background:#f5f3ff;color:#7c3aed}
-.pe-bar{height:6px;border-radius:3px;background:#e2e8f0;overflow:hidden;min-width:60px}
-.pe-bar-fill{height:100%;border-radius:3px}
-.pe-low{background:#16a34a}.pe-mid{background:#d97706}.pe-high{background:#dc2626}
+/* Nav */
+.nav{max-width:1440px;margin:0 auto;padding:8px 28px;display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid #e2e8f0;background:#fff}
+.nb{padding:6px 12px;border-radius:6px;border:1px solid transparent;background:transparent;color:#64748b;cursor:pointer;font-size:12px;transition:.15s}
+.nb:hover{background:#f1f5f9;color:#475569}
+.nb.ac{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8;font-weight:600}
 
-/* Valuation Matrix */
-.matrix-container{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media(max-width:768px){.matrix-container{grid-template-columns:1fr}.mapping-grid{grid-template-columns:1fr}}
-.matrix-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
-.matrix-card h3{font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:6px;color:#0f172a}
-.matrix-card .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
-.quad-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.quad{border:1px solid #e2e8f0;border-radius:8px;padding:10px;min-height:80px}
-.quad h4{font-size:11px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:4px;color:#334155}
-.quad .q-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+/* Container */
+.ct{max-width:1440px;margin:0 auto;padding:20px 28px 40px}
+.sec{margin-bottom:32px}
+.sec-hd{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #e2e8f0}
+.sec-hd .ic{font-size:16px}
+.sec-hd .tt{font-size:15px;font-weight:700;color:#0f172a}
+.sec-hd .bd{font-size:10px;color:#64748b;background:#f1f5f9;padding:2px 8px;border-radius:8px;margin-left:auto}
+
+/* Cards */
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:14px;box-shadow:0 1px 2px rgba(0,0,0,0.03);transition:.15s}
+.card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.06);border-color:#cbd5e1}
+.card-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.card-title{font-size:14px;font-weight:700;color:#0f172a}
+.card-sub{font-size:11px;color:#64748b}
+
+/* Tags */
+.tag{font-size:10px;padding:2px 7px;border-radius:5px;font-weight:600;display:inline-block}
+.tag-a{background:#fef2f2;color:#dc2626}
+.tag-hk{background:#fffbeb;color:#d97706}
+.tag-us{background:#eff6ff;color:#2563eb}
+.tag-kr{background:#f5f3ff;color:#7c3aed}
+.tag-up{background:#fef2f2;color:#dc2626}
+.tag-dn{background:#f0fdf4;color:#16a34a}
+.tag-flat{background:#f8fafc;color:#94a3b8}
+.tag-warn{background:#fffbeb;color:#d97706}
+.tag-buy{background:#fef2f2;color:#dc2626}
+.tag-out{background:#eff6ff;color:#2563eb}
+.tag-hold{background:#fffbeb;color:#d97706}
+
+/* Stock Table */
+.tbl-wrap{overflow-x:auto;background:#fff;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 1px 2px rgba(0,0,0,0.03)}
+table{width:100%;border-collapse:collapse;font-size:11px}
+thead th{background:#f8fafc;padding:9px 10px;text-align:right;font-weight:600;color:#64748b;font-size:10px;white-space:nowrap;border-bottom:1px solid #e2e8f0;position:sticky;top:0}
+thead th:first-child{text-align:left}
+tbody td{padding:9px 10px;text-align:right;border-bottom:1px solid #f1f5f9;white-space:nowrap}
+tbody td:first-child{text-align:left}
+tbody tr:hover{background:#f8fafc}
+.up{color:#dc2626}.dn{color:#16a34a}.flat{color:#94a3b8}
+.stk-n{font-weight:700;color:#0f172a}
+.stk-c{color:#94a3b8;font-size:9px}
+.stk-cat{font-size:9px;padding:1px 5px;border-radius:3px;background:#f1f5f9;color:#64748b}
+.pe-bar{height:5px;border-radius:3px;background:#e2e8f0;overflow:hidden;min-width:50px;display:inline-block}
+.pe-fill{height:100%;border-radius:3px}
+.pe-lo{background:#16a34a}.pe-mi{background:#d97706}.pe-hi{background:#dc2626}
+.roe-bar{height:5px;border-radius:3px;background:#e2e8f0;overflow:hidden;min-width:50px;display:inline-block}
+.roe-fill{height:100%;border-radius:3px;background:#2563eb}
+.link{color:#2563eb;text-decoration:none;font-size:10px}
+.link:hover{text-decoration:underline}
+
+/* Mapping */
+.map-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.map-card{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;transition:.15s}
+.map-card:hover{border-color:#cbd5e1;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
+.map-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.map-cat{font-size:10px;color:#64748b;background:#f1f5f9;padding:1px 6px;border-radius:4px}
+.map-title{font-size:13px;font-weight:600;color:#0f172a}
+.map-price{font-size:11px;color:#64748b;margin:4px 0 6px}
+.map-stocks{display:flex;flex-wrap:wrap;gap:4px}
+.map-stk{font-size:10px;padding:2px 6px;border-radius:4px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;cursor:default}
+
+/* Quad */
+.quad-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.quad{border:1px solid #e2e8f0;border-radius:8px;padding:12px;min-height:100px}
+.quad h4{font-size:11px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:4px}
 .quad ul{list-style:none;font-size:11px}
-.quad li{padding:2px 0;color:#64748b}
+.quad li{padding:3px 0;color:#475569}
 .quad li strong{color:#0f172a}
-.q1{border-color:#bbf7d0;background:#f0fdf4}
-.q2{border-color:#fde68a;background:#fffbeb}
-.q3{border-color:#e2e8f0;background:#f8fafc}
-.q4{border-color:#fecaca;background:#fef2f2}
+.q1{border-color:#bbf7d0;background:#f0fdf4}.q1 h4{color:#16a34a}
+.q2{border-color:#fde68a;background:#fffbeb}.q2 h4{color:#d97706}
+.q3{border-color:#e2e8f0;background:#f8fafc}.q3 h4{color:#64748b}
+.q4{border-color:#fecaca;background:#fef2f2}.q4 h4{color:#dc2626}
 
-/* Research Reports */
-.report-list{display:grid;gap:10px}
-.report-item{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;transition:.15s;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
-.report-item:hover{border-color:#cbd5e1;box-shadow:0 4px 12px rgba(0,0,0,0.06)}
-.report-left{flex:1}
-.report-title{font-size:13px;font-weight:500;color:#0f172a;margin-bottom:4px}
-.report-meta{font-size:11px;color:#64748b}
-.report-rating{font-size:11px;padding:3px 10px;border-radius:6px;font-weight:600;white-space:nowrap}
-.rating-buy{background:#fef2f2;color:#dc2626}
-.rating-hold{background:#fffbeb;color:#d97706}
-.rating-outperform{background:#eff6ff;color:#2563eb}
+/* Report */
+.rpt-list{display:grid;gap:8px}
+.rpt{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;transition:.15s}
+.rpt:hover{border-color:#cbd5e1}
+.rpt-l{flex:1}
+.rpt-t{font-size:12px;font-weight:500;color:#0f172a;margin-bottom:2px}
+.rpt-m{font-size:10px;color:#64748b}
 
 /* Insight */
-.insight{background:linear-gradient(135deg,#eff6ff,#f5f3ff);border:1px solid #bfdbfe;border-radius:10px;padding:18px;margin-top:20px}
-.insight h4{color:#1d4ed8;font-size:13px;margin-bottom:10px}
-.insight ul{list-style:none}
-.insight li{font-size:12px;padding:4px 0 4px 18px;position:relative;color:#334155}
-.insight li::before{content:'→';position:absolute;left:0;color:#2563eb}
-.insight li strong{color:#1d4ed8}
+.ins{background:linear-gradient(135deg,#eff6ff,#f5f3ff);border:1px solid #bfdbfe;border-radius:10px;padding:16px;margin-top:16px}
+.ins h4{color:#1d4ed8;font-size:12px;margin-bottom:8px}
+.ins ul{list-style:none}
+.ins li{font-size:11px;padding:3px 0 3px 16px;position:relative;color:#334155}
+.ins li::before{content:'→';position:absolute;left:0;color:#2563eb}
+.ins li strong{color:#1d4ed8}
 
-.footer{text-align:center;padding:24px 0 8px;color:#94a3b8;font-size:10px;border-top:1px solid #e2e8f0;margin-top:32px}
-.loading{display:flex;align-items:center;justify-content:center;padding:40px;color:#64748b;font-size:13px}
-.spinner{width:20px;height:20px;border:2px solid #e2e8f0;border-top-color:#3b82f6;border-radius:50%;animation:spin 1s linear infinite;margin-right:8px}
-@keyframes spin{to{transform:rotate(360deg)}}
+/* Dual */
+.dual{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:900px){.dual{grid-template-columns:1fr}.map-grid{grid-template-columns:1fr}.quad-grid{grid-template-columns:1fr}}
+
+.ft{text-align:center;padding:20px 0 8px;color:#cbd5e1;font-size:10px;border-top:1px solid #e2e8f0;margin-top:32px}
+
+/* Category section headers */
+.cat-hd{font-size:12px;font-weight:700;color:#475569;margin:16px 0 8px;padding-left:8px;border-left:3px solid #2563eb}
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="header-inner">
+<div class="hd">
+  <div class="hd-in">
     <div class="logo">
-      <div class="logo-icon">📊</div>
-      <div>
-        <h1>半导体产业链投资分析</h1>
-        <div class="logo-sub">价格趋势 × 估值分析 × 投资价值</div>
-      </div>
+      <div class="logo-ic">📊</div>
+      <div><h1>半导体产业链投资分析</h1><div class="logo-sub">价格趋势 × 估值分析 × 投资价值矩阵</div></div>
     </div>
-    <div class="header-right">
-      <div class="date-info" id="updateTime">更新中...</div>
-    </div>
+    <div class="hd-r" id="updateTime">更新中...</div>
   </div>
 </div>
 
 <div class="nav">
-  <button class="nav-btn active" onclick="switchTab('all',this)">📋 全部</button>
-  <button class="nav-btn" onclick="switchTab('mapping',this)">🔗 价格-股票映射</button>
-  <button class="nav-btn" onclick="switchTab('pool',this)">📈 重点股票池</button>
-  <button class="nav-btn" onclick="switchTab('valuation',this)">🎯 估值分析</button>
-  <button class="nav-btn" onclick="switchTab('report',this)">📰 研报精选</button>
+  <button class="nb ac" onclick="sw('all',this)">📋 全部</button>
+  <button class="nb" onclick="sw('map',this)">🔗 价格映射</button>
+  <button class="nb" onclick="sw('pool',this)">📈 股票池</button>
+  <button class="nb" onclick="sw('val',this)">🎯 估值矩阵</button>
+  <button class="nb" onclick="sw('rpt',this)">📰 研报</button>
 </div>
 
-<div class="container">
+<div class="ct">
 
-<!-- ===== 价格-股票映射 ===== -->
-<div class="section tab-section" data-tab="mapping">
-  <div class="section-header">
-    <span class="section-icon">🔗</span>
-    <span class="section-title">存储价格 → 关联股票映射</span>
-    <span class="section-badge">价格涨跌 → 受益/受损标的</span>
-  </div>
-  <div class="mapping-grid" id="mappingGrid"></div>
+<!-- ===== 价格映射 ===== -->
+<div class="sec ts" data-t="map">
+  <div class="sec-hd"><span class="ic">🔗</span><span class="tt">存储价格 → 关联标的映射</span><span class="bd">价格涨跌驱动因素 → 受益/受损公司</span></div>
+  <div class="map-grid" id="mapGrid"></div>
 </div>
 
-<!-- ===== 重点股票池 ===== -->
-<div class="section tab-section" data-tab="pool">
-  <div class="section-header">
-    <span class="section-icon">📈</span>
-    <span class="section-title">半导体产业链重点股票池</span>
-    <span class="section-badge" id="stockCount">-</span>
-  </div>
-  <div class="stock-table-wrap">
-    <table class="stock-table" id="stockTable">
-      <thead>
-        <tr>
-          <th style="text-align:left">公司</th>
-          <th>环节</th>
-          <th>股价</th>
-          <th>涨跌幅</th>
-          <th>PE-TTM</th>
-          <th>PB</th>
-          <th>EPS(TTM)</th>
-          <th>市值(亿)</th>
-          <th>价格信号</th>
-        </tr>
-      </thead>
-      <tbody id="stockBody"></tbody>
-    </table>
-  </div>
+<!-- ===== 股票池 ===== -->
+<div class="sec ts" data-t="pool">
+  <div class="sec-hd"><span class="ic">📈</span><span class="tt">半导体产业链重点股票池</span><span class="bd" id="stkCnt">-</span></div>
+  <div id="poolContent"></div>
 </div>
 
-<!-- ===== 估值分析 ===== -->
-<div class="section tab-section" data-tab="valuation">
-  <div class="section-header">
-    <span class="section-icon">🎯</span>
-    <span class="section-title">投资价值矩阵</span>
-    <span class="section-badge">景气度 × 估值水平</span>
-  </div>
-  <div class="matrix-container">
-    <div class="matrix-card">
-      <h3><span class="dot" style="background:#22c55e"></span>投资价值四象限</h3>
-      <div style="font-size:11px;color:#64748b;margin-bottom:10px;">X轴：关联存储价格趋势（涨→跌）&nbsp;&nbsp;Y轴：PE估值水平（低→高）</div>
+<!-- ===== 估值矩阵 ===== -->
+<div class="sec ts" data-t="val">
+  <div class="sec-hd"><span class="ic">🎯</span><span class="tt">投资价值矩阵</span><span class="bd">景气度 × PE估值</span></div>
+  <div class="dual">
+    <div class="card">
+      <div class="card-title" style="margin-bottom:10px">四象限：景气度 × 估值</div>
+      <div style="font-size:10px;color:#94a3b8;margin-bottom:8px">X: 关联存储价格趋势（涨→稳→跌） Y: PE水平（低→高）</div>
       <div class="quad-grid">
-        <div class="quad q1">
-          <h4><span class="q-dot" style="background:#22c55e"></span> ⭐ 高景气 + 低估值</h4>
-          <ul id="q1List"></ul>
-        </div>
-        <div class="quad q2">
-          <h4><span class="q-dot" style="background:#fbbf24"></span> 📊 高景气 + 高估值</h4>
-          <ul id="q2List"></ul>
-        </div>
-        <div class="quad q3">
-          <h4><span class="q-dot" style="background:#64748b"></span> 💤 低景气 + 低估值</h4>
-          <ul id="q3List"></ul>
-        </div>
-        <div class="quad q4">
-          <h4><span class="q-dot" style="background:#f87171"></span> ⚠️ 低景气 + 高估值</h4>
-          <ul id="q4List"></ul>
-        </div>
+        <div class="quad q1"><h4>⭐ 高景气 + 低PE</h4><ul id="q1"></ul></div>
+        <div class="quad q2"><h4>📊 高景气 + 高PE</h4><ul id="q2"></ul></div>
+        <div class="quad q3"><h4>💤 低景气 + 低PE</h4><ul id="q3"></ul></div>
+        <div class="quad q4"><h4>⚠️ 低景气 + 高PE</h4><ul id="q4"></ul></div>
       </div>
     </div>
-    <div class="matrix-card">
-      <h3><span class="dot" style="background:#60a5fa"></span>PE-PB 散点分布</h3>
-      <div style="height:300px;"><canvas id="scatterChart"></canvas></div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:10px">PE-ROE 散点图</div>
+      <div style="height:320px"><canvas id="scChart"></canvas></div>
     </div>
   </div>
 </div>
 
-<!-- ===== 研报精选 ===== -->
-<div class="section tab-section" data-tab="report">
-  <div class="section-header">
-    <span class="section-icon">📰</span>
-    <span class="section-title">券商研报精选</span>
-    <span class="section-badge">最新机构观点</span>
-  </div>
-  <div class="report-list" id="reportList"></div>
+<!-- ===== 研报 ===== -->
+<div class="sec ts" data-t="rpt">
+  <div class="sec-hd"><span class="ic">📰</span><span class="tt">券商研报精选</span><span class="bd">最新机构观点</span></div>
+  <div class="rpt-list" id="rptList"></div>
 </div>
 
-<!-- ===== 投资洞察 ===== -->
-<div class="section">
-  <div class="insight">
-    <h4>💡 投资洞察 — 基于价格趋势+估值分析</h4>
+<!-- ===== 洞察 ===== -->
+<div class="sec">
+  <div class="ins">
+    <h4>💡 投资洞察 — 基于价格趋势 + 财务数据 + 估值分析</h4>
     <ul>
-      <li><strong>存储涨价主线：</strong>NAND Wafer原厂涨价意向明确+MLC停供，利好上游存储芯片设计公司（兆易创新、北京君正）。模组厂（江波龙、佰维存储）短期承压但中期受益。</li>
-      <li><strong>DDR5放量主线：</strong>DDR5渠道/行业颗粒持续涨价，Q3合约预涨20%。澜起科技（接口芯片）直接受益于DDR5渗透率提升。</li>
-      <li><strong>AI服务器主线：</strong>企业级SSD涨幅收窄但趋势延续，DDR5现货冲高。沪电股份（高端PCB）、中际旭创（光模块）、工业富联（代工）持续受益。</li>
-      <li><strong>估值分化：</strong>A股半导体PE普遍高于海外，但成长性更强。关注PE低于行业中位数+景气度向上的标的。</li>
-      <li><strong>风险提示：</strong>存储价格波动大，消费级需求疲软，地缘政治风险，估值回调压力。</li>
+      <li><strong>存储涨价主线：</strong>NAND Wafer原厂涨价意向+MLC停供，上游芯片设计（兆易创新、北京君正）直接受益。佰维存储Q1利润暴增2644%，印证涨价周期弹性。</li>
+      <li><strong>DDR5放量主线：</strong>Q3合约预涨20%，澜起科技（接口芯片）ROE从4.4%→17.3%大幅改善，EPS连续超预期。</li>
+      <li><strong>AI算力主线：</strong>中际旭创ROE 36.3%领跑全行业，800G/1.6T光模块放量驱动。沪电股份ROE 25.3%，高端PCB产能持续扩张。</li>
+      <li><strong>估值分化：</strong>A股半导体PE普遍20-40x，韩股存储IDM 8-15x更便宜但受地缘风险溢价。关注PE低于行业中位数+ROE向上的标的。</li>
+      <li><strong>关键指标：</strong>ROE是核心筛选指标——中际旭创36%、沪电25%、佰维32%（Q1年化），均属优质成长股。</li>
+      <li><strong>风险提示：</strong>存储价格波动大，消费级需求疲软，AI资本开支可能放缓，地缘政治风险，高估值回调压力。</li>
     </ul>
   </div>
 </div>
 
 </div>
 
-<div class="footer">
-  半导体产业链投资分析 · 价格数据来源于中国闪存市场 · 财务数据来源于公开财报 · 仅供学习参考，不构成投资建议
-</div>
+<div class="ft">半导体产业链投资分析 · 价格数据：中国闪存市场 · 财务数据：公开财报 · 仅供学习参考，不构成投资建议</div>
 
 <script>
-// ===== Tab Switching =====
-function switchTab(tab, btn) {
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll('.tab-section').forEach(s => {
-    s.style.display = (tab === 'all' || s.dataset.tab === tab) ? 'block' : 'none';
-  });
-}
+function sw(t,btn){document.querySelectorAll('.nb').forEach(b=>b.classList.remove('ac'));btn.classList.add('ac');document.querySelectorAll('.ts').forEach(s=>{s.style.display=(t==='all'||s.dataset.t===t)?'block':'none'})}
 
-// ===== Data =====
-const STOCKS = [
-  {name:'兆易创新',code:'603986',market:'A',sector:'存储芯片设计',price:'-',change:'-',pe:'-',pb:'-',eps:2.47,epsQ1:2.08,bvps:36.05,mcap:'-',signal:'up',signalText:'涨价受益',note:'NOR/NAND/MCU龙头'},
-  {name:'北京君正',code:'300223',market:'A',sector:'存储芯片设计',price:'-',change:'-',pe:'-',pb:'-',eps:1.85,epsQ1:0.52,bvps:22.30,mcap:'-',signal:'up',signalText:'涨价受益',note:'DRAM+处理器'},
-  {name:'东芯股份',code:'688110',market:'A',sector:'存储芯片设计',price:'-',change:'-',pe:'-',pb:'-',eps:0.45,epsQ1:0.15,bvps:12.80,mcap:'-',signal:'up',signalText:'涨价受益',note:'NAND/NOR/DRAM'},
-  {name:'江波龙',code:'301308',market:'A',sector:'存储模组',price:'-',change:'-',pe:'-',pb:'-',eps:3.20,epsQ1:0.85,bvps:28.50,mcap:'-',signal:'warn',signalText:'成本承压',note:'FORESEE+Lexar品牌'},
-  {name:'佰维存储',code:'688525',market:'A',sector:'存储模组',price:'-',change:'-',pe:'-',pb:'-',eps:1.60,epsQ1:0.42,bvps:15.20,mcap:'-',signal:'warn',signalText:'成本承压',note:'嵌入式存储'},
-  {name:'德明利',code:'301007',market:'A',sector:'存储模组',price:'-',change:'-',pe:'-',pb:'-',eps:0.95,epsQ1:0.28,bvps:8.60,mcap:'-',signal:'warn',signalText:'成本承压',note:'存储模组'},
-  {name:'澜起科技',code:'688008',market:'A',sector:'内存接口',price:'-',change:'-',pe:'-',pb:'-',eps:2.80,epsQ1:0.75,bvps:18.50,mcap:'-',signal:'up',signalText:'DDR5放量',note:'DDR5接口芯片'},
-  {name:'沪电股份',code:'002463',market:'A',sector:'PCB',price:'-',change:'-',pe:'-',pb:'-',eps:1.35,epsQ1:0.38,bvps:8.90,mcap:'-',signal:'up',signalText:'AI服务器',note:'高端服务器PCB'},
-  {name:'中际旭创',code:'300308',market:'A',sector:'光模块',price:'-',change:'-',pe:'-',pb:'-',eps:5.60,epsQ1:1.80,bvps:22.40,mcap:'-',signal:'up',signalText:'800G放量',note:'800G/1.6T光模块'},
-  {name:'工业富联',code:'601138',market:'A',sector:'代工',price:'-',change:'-',pe:'-',pb:'-',eps:2.10,epsQ1:0.58,bvps:12.30,mcap:'-',signal:'up',signalText:'AI服务器',note:'服务器组装龙头'},
-  {name:'英维克',code:'002837',market:'A',sector:'散热',price:'-',change:'-',pe:'-',pb:'-',eps:0.85,epsQ1:0.22,bvps:5.60,mcap:'-',signal:'up',signalText:'液冷渗透',note:'液冷散热'},
-  {name:'三星电子',code:'005930',market:'KR',sector:'存储IDM',price:'-',change:'-',pe:'-',pb:'-',eps:5200,epsQ1:1450,bvps:52000,mcap:'-',signal:'up',signalText:'涨价龙头',note:'全球存储龙头'},
-  {name:'SK海力士',code:'000660',market:'KR',sector:'存储IDM',price:'-',change:'-',pe:'-',pb:'-',eps:18000,epsQ1:5200,bvps:85000,mcap:'-',signal:'up',signalText:'HBM供不应求',note:'HBM全球第一'},
-  {name:'美光科技',code:'MU',market:'US',sector:'存储IDM',price:'-',change:'-',pe:'-',pb:'-',eps:8.50,epsQ1:2.60,bvps:42.00,mcap:'-',signal:'up',signalText:'AI驱动',note:'DRAM+NAND'},
+// ===== 股票数据 =====
+const S=[
+  // 存储芯片设计
+  {n:'兆易创新',c:'603986',m:'A',cat:'存储芯片设计',sub:'NOR Flash / NAND / MCU',p:'-',ch:'-',pe:'-',pb:'-',eps:2.47,bv:36.05,roe:8.7,sig:'up',sigT:'涨价受益',link:'https://finance.sina.com.cn/realstock/company/sh603986/nc.shtml'},
+  {n:'北京君正',c:'300223',m:'A',cat:'存储芯片设计',sub:'DRAM / 处理器',p:'-',ch:'-',pe:'-',pb:'-',eps:1.85,bv:22.30,roe:8.3,sig:'up',sigT:'涨价受益',link:'https://finance.sina.com.cn/realstock/company/sz300223/nc.shtml'},
+  {n:'东芯股份',c:'688110',m:'A',cat:'存储芯片设计',sub:'NAND / NOR / DRAM',p:'-',ch:'-',pe:'-',pb:'-',eps:0.45,bv:12.80,roe:3.5,sig:'up',sigT:'涨价受益',link:'https://finance.sina.com.cn/realstock/company/sh688110/nc.shtml'},
+  {n:'聚辰股份',c:'688123',m:'A',cat:'存储芯片设计',sub:'EEPROM / 音圈马达驱动',p:'-',ch:'-',pe:'-',pb:'-',eps:2.10,bv:18.50,roe:11.4,sig:'flat',sigT:'平稳',link:'https://finance.sina.com.cn/realstock/company/sh688123/nc.shtml'},
+  {n:'普冉股份',c:'688766',m:'A',cat:'存储芯片设计',sub:'NOR Flash / EEPROM',p:'-',ch:'-',pe:'-',pb:'-',eps:1.50,bv:14.20,roe:10.6,sig:'up',sigT:'涨价受益',link:'https://finance.sina.com.cn/realstock/company/sh688766/nc.shtml'},
+  {n:'恒烁股份',c:'688416',m:'A',cat:'存储芯片设计',sub:'NOR Flash / MCU',p:'-',ch:'-',pe:'-',pb:'-',eps:0.35,bv:11.80,roe:3.0,sig:'up',sigT:'涨价受益',link:'https://finance.sina.com.cn/realstock/company/sh688416/nc.shtml'},
+  // 存储模组
+  {n:'江波龙',c:'301308',m:'A',cat:'存储模组',sub:'FORESEE / Lexar 品牌模组',p:'-',ch:'-',pe:'-',pb:'-',eps:3.40,bv:18.74,roe:18.1,sig:'warn',sigT:'成本承压',link:'https://finance.sina.com.cn/realstock/company/sz301308/nc.shtml'},
+  {n:'佰维存储',c:'688525',m:'A',cat:'存储模组',sub:'嵌入式存储 / eMMC / UFS',p:'-',ch:'-',pe:'-',pb:'-',eps:9.21,bv:29.07,roe:31.7,sig:'up',sigT:'Q1暴增2644%',link:'https://finance.sina.com.cn/realstock/company/sh688525/nc.shtml'},
+  {n:'德明利',c:'301007',m:'A',cat:'存储模组',sub:'存储模组 / 封测',p:'-',ch:'-',pe:'-',pb:'-',eps:0.95,bv:8.60,roe:11.0,sig:'warn',sigT:'成本承压',link:'https://finance.sina.com.cn/realstock/company/sz301007/nc.shtml'},
+  // 内存接口
+  {n:'澜起科技',c:'688008',m:'A',cat:'内存接口',sub:'DDR5接口芯片 / 数据处理',p:'-',ch:'-',pe:'-',pb:'-',eps:1.95,bv:11.27,roe:17.3,sig:'up',sigT:'DDR5放量',link:'https://finance.sina.com.cn/realstock/company/sh688008/nc.shtml'},
+  // PCB
+  {n:'沪电股份',c:'002463',m:'A',cat:'PCB',sub:'高端服务器/通信PCB',p:'-',ch:'-',pe:'-',pb:'-',eps:1.99,bv:7.85,roe:25.3,sig:'up',sigT:'AI服务器',link:'https://finance.sina.com.cn/realstock/company/sz002463/nc.shtml'},
+  // 光模块
+  {n:'中际旭创',c:'300308',m:'A',cat:'光模块',sub:'800G / 1.6T光模块',p:'-',ch:'-',pe:'-',pb:'-',eps:9.72,bv:26.79,roe:36.3,sig:'up',sigT:'800G放量',link:'https://finance.sina.com.cn/realstock/company/sz300308/nc.shtml'},
+  // 代工
+  {n:'工业富联',c:'601138',m:'A',cat:'代工',sub:'AI服务器组装 / GB200',p:'-',ch:'-',pe:'-',pb:'-',eps:2.10,bv:12.30,roe:17.1,sig:'up',sigT:'AI服务器',link:'https://finance.sina.com.cn/realstock/company/sh601138/nc.shtml'},
+  // 散热
+  {n:'英维克',c:'002837',m:'A',cat:'散热',sub:'液冷散热 / 数据中心温控',p:'-',ch:'-',pe:'-',pb:'-',eps:0.85,bv:5.60,roe:15.2,sig:'up',sigT:'液冷渗透',link:'https://finance.sina.com.cn/realstock/company/sz002837/nc.shtml'},
+  // 国际
+  {n:'三星电子',c:'005930',m:'KR',cat:'存储IDM',sub:'DRAM / NAND / HBM 全球龙头',p:'-',ch:'-',pe:'-',pb:'-',eps:5200,bv:52000,roe:10.0,sig:'up',sigT:'涨价龙头',link:'https://finance.yahoo.com/quote/005930.KS/'},
+  {n:'SK海力士',c:'000660',m:'KR',cat:'存储IDM',sub:'HBM全球第一 / DRAM',p:'-',ch:'-',pe:'-',pb:'-',eps:18000,bv:85000,roe:21.2,sig:'up',sigT:'HBM供不应求',link:'https://finance.yahoo.com/quote/000660.KS/'},
+  {n:'美光科技',c:'MU',m:'US',cat:'存储IDM',sub:'DRAM / NAND / HBM',p:'-',ch:'-',pe:'-',pb:'-',eps:8.50,bv:42.00,roe:20.2,sig:'up',sigT:'AI驱动',link:'https://finance.yahoo.com/quote/MU/'},
+  {n:'西部数据',c:'WDC',m:'US',cat:'存储IDM',sub:'HDD / NAND / SSD',p:'-',ch:'-',pe:'-',pb:'-',eps:4.20,bv:28.00,roe:15.0,sig:'warn',sigT:'NAND转型',link:'https://finance.yahoo.com/quote/WDC/'},
 ];
 
-const MAPPINGS = [
-  {cat:'存储芯片',title:'NAND Wafer',price:'$26.50~$29.00',signal:'warn',signalText:'原厂涨价意向',stocks:['兆易创新','东芯股份','三星电子','SK海力士','美光科技']},
-  {cat:'存储芯片',title:'DRAM现货 (DDR4 eTT)',price:'$7.80',signal:'up',signalText:'+5.41%',stocks:['北京君正','兆易创新','三星电子','SK海力士']},
-  {cat:'存储芯片',title:'DDR5 渠道/行业颗粒',price:'$22.50~$115',signal:'up',signalText:'持续涨价',stocks:['澜起科技','江波龙','佰维存储']},
-  {cat:'服务器',title:'DDR5 RDIMM 合约价',price:'$730~$2,310',signal:'flat',signalText:'7月持平',stocks:['澜起科技','工业富联','沪电股份']},
-  {cat:'服务器',title:'企业级SSD',price:'$75~$400',signal:'warn',signalText:'涨幅收窄1.4%',stocks:['佰维存储','江波龙','德明利']},
-  {cat:'移动',title:'LPDDR5X',price:'$114~$235',signal:'flat',signalText:'趋稳',stocks:['兆易创新','北京君正']},
-  {cat:'消费',title:'消费级SSD',price:'$38~$250',signal:'flat',signalText:'全线持平',stocks:['江波龙','佰维存储','德明利']},
-  {cat:'AI基础设施',title:'HBM3e',price:'极度紧缺',signal:'up',signalText:'交期>6月',stocks:['SK海力士','三星电子','英维克']},
-  {cat:'AI基础设施',title:'800G光模块',price:'产能紧张',signal:'up',signalText:'放量中',stocks:['中际旭创']},
-  {cat:'AI基础设施',title:'高端服务器PCB',price:'供应偏紧',signal:'up',signalText:'需求旺盛',stocks:['沪电股份']},
+// ===== 映射数据 =====
+const MAP=[
+  {cat:'存储芯片',title:'NAND Wafer 现货',price:'$26.50~$29.00 · 全线持平',sig:'warn',sigT:'原厂涨价意向',sts:['兆易创新','东芯股份','三星电子','SK海力士','美光科技','西部数据']},
+  {cat:'存储芯片',title:'DDR4 eTT 现货',price:'$7.80 · 日涨+5.41%',sig:'up',sigT:'+5.41%',sts:['兆易创新','北京君正','普冉股份']},
+  {cat:'存储芯片',title:'DDR5 渠道/行业颗粒',price:'$22.50~$115 · 持续涨价',sig:'up',sigT:'SODIMM周涨4.55%',sts:['澜起科技','江波龙','佰维存储','德明利']},
+  {cat:'服务器',title:'DDR5 RDIMM 合约价',price:'$730~$2,310 · 7月持平',sig:'warn',sigT:'Q3预涨20%',sts:['澜起科技','工业富联','沪电股份']},
+  {cat:'服务器',title:'企业级SSD',price:'$75~$400 · 涨幅收窄至1.4%',sig:'warn',sigT:'涨幅收窄',sts:['佰维存储','江波龙','德明利']},
+  {cat:'AI基础设施',title:'HBM3e',price:'极度紧缺 · 交期>6个月',sig:'up',sigT:'供不应求',sts:['SK海力士','三星电子','美光科技']},
+  {cat:'AI基础设施',title:'800G/1.6T光模块',price:'产能紧张 · 放量中',sig:'up',sigT:'放量',sts:['中际旭创']},
+  {cat:'AI基础设施',title:'高端服务器PCB',price:'供应偏紧 · 43亿扩产',sig:'up',sigT:'需求旺盛',sts:['沪电股份']},
+  {cat:'移动',title:'LPDDR5X',price:'$114~$235 · 全线持平',sig:'flat',sigT:'趋稳',sts:['兆易创新','北京君正','三星电子']},
+  {cat:'消费',title:'消费级SSD',price:'$38~$250 · 全线持平',sig:'flat',sigT:'跌幅消化',sts:['江波龙','佰维存储','德明利','西部数据']},
 ];
 
-const REPORTS = [
-  {title:'兆易创新：存储+MCU双轮驱动，AI终端打开成长空间',org:'华泰证券',date:'2026-07-05',rating:'买入',ratingClass:'rating-buy',target:'180元'},
-  {title:'澜起科技：DDR5渗透率提升，接口芯片量价齐升',org:'中金公司',date:'2026-07-04',rating:'跑赢行业',ratingClass:'rating-outperform',target:'120元'},
-  {title:'江波龙：存储涨价周期受益，品牌+渠道双壁垒',org:'招商证券',date:'2026-07-03',rating:'增持',ratingClass:'rating-buy',target:'150元'},
-  {title:'沪电股份：AI服务器PCB龙头，高端产能持续扩张',org:'国金证券',date:'2026-07-03',rating:'买入',ratingClass:'rating-buy',target:'45元'},
-  {title:'中际旭创：800G光模块放量，1.6T产品蓄势待发',org:'光大证券',date:'2026-07-02',rating:'买入',ratingClass:'rating-buy',target:'200元'},
-  {title:'工业富联：AI服务器组装龙头，GB200量产带来业绩弹性',org:'中信证券',date:'2026-07-01',rating:'买入',ratingClass:'rating-buy',target:'35元'},
-  {title:'SK海力士：HBM供不应求，Q3合约价预涨20%提升盈利',org:'摩根士丹利',date:'2026-06-30',rating:'增持',ratingClass:'rating-buy',target:'KRW 280,000'},
-  {title:'存储行业：下半年涨价趋势确立，关注结构性紧缺',org:'中信建投',date:'2026-06-28',rating:'强于大市',ratingClass:'rating-outperform',target:'—'},
+// ===== 研报 =====
+const RPT=[
+  {t:'兆易创新：存储+MCU双轮驱动，AI终端打开成长空间',o:'华泰证券',d:'2026-07-05',r:'买入',rc:'tag-buy',tp:'180元'},
+  {t:'澜起科技：DDR5渗透率提升，接口芯片量价齐升',o:'中金公司',d:'2026-07-04',r:'跑赢行业',rc:'tag-out',tp:'120元'},
+  {t:'佰维存储：Q1利润暴增2644%，存储模组龙头业绩拐点',o:'招商证券',d:'2026-07-04',r:'增持',rc:'tag-buy',tp:'—'},
+  {t:'沪电股份：AI服务器PCB龙头，ROE 25%持续扩张',o:'国金证券',d:'2026-07-03',r:'买入',rc:'tag-buy',tp:'45元'},
+  {t:'中际旭创：800G光模块放量，ROE 36%领跑行业',o:'光大证券',d:'2026-07-02',r:'买入',rc:'tag-buy',tp:'200元'},
+  {t:'工业富联：GB200量产带来业绩弹性，AI服务器组装龙头',o:'中信证券',d:'2026-07-01',r:'买入',rc:'tag-buy',tp:'35元'},
+  {t:'SK海力士：HBM供不应求，Q3合约价预涨20%',o:'摩根士丹利',d:'2026-06-30',r:'增持',rc:'tag-buy',tp:'KRW 280,000'},
+  {t:'存储行业：下半年涨价趋势确立，结构性紧缺持续',o:'中信建投',d:'2026-06-28',r:'强于大市',rc:'tag-out',tp:'—'},
+  {t:'北京君正：DRAM国产替代加速，处理器业务协同',o:'东吴证券',d:'2026-06-27',r:'买入',rc:'tag-buy',tp:'—'},
+  {t:'英维克：液冷渗透率提升，数据中心温控龙头',o:'国泰君安',d:'2026-06-25',r:'增持',rc:'tag-buy',tp:'—'},
 ];
 
-// ===== Render Functions =====
-function renderMappings() {
-  const grid = document.getElementById('mappingGrid');
-  grid.innerHTML = MAPPINGS.map(m => `
-    <div class="mapping-card">
-      <div class="mc-header">
-        <span class="mc-cat">${m.cat}</span>
-        <span class="mc-signal signal-${m.signal}">${m.signalText}</span>
-      </div>
-      <div class="mc-title">${m.title}</div>
-      <div class="mc-price">${m.price}</div>
-      <div class="mc-stocks">${m.stocks.map(s => `<span class="stock-tag">${s}</span>`).join('')}</div>
+// ===== 渲染映射 =====
+function renderMap(){
+  document.getElementById('mapGrid').innerHTML=MAP.map(m=>`
+    <div class="map-card">
+      <div class="map-hd"><span class="map-cat">${m.cat}</span><span class="tag tag-${m.sig}">${m.sigT}</span></div>
+      <div class="map-title">${m.title}</div>
+      <div class="map-price">${m.price}</div>
+      <div class="map-stocks">${m.sts.map(s=>`<span class="map-stk">${s}</span>`).join('')}</div>
     </div>
   `).join('');
 }
 
-function renderStocks() {
-  const body = document.getElementById('stockBody');
-  document.getElementById('stockCount').textContent = STOCKS.length + ' 只标的';
-  body.innerHTML = STOCKS.map(s => {
-    const changeClass = s.change === '-' ? 'flat' : (parseFloat(s.change) >= 0 ? 'up' : 'down');
-    const peClass = s.pe === '-' ? '' : (parseFloat(s.pe) < 20 ? 'pe-low' : (parseFloat(s.pe) < 40 ? 'pe-mid' : 'pe-high'));
-    const peWidth = s.pe === '-' ? 0 : Math.min(parseFloat(s.pe) / 60 * 100, 100);
-    const marketClass = s.market === 'A' ? 'market-a' : (s.market === 'HK' ? 'market-hk' : (s.market === 'KR' ? 'market-kr' : 'market-us'));
-    return `<tr>
-      <td><span class="stk-name">${s.name}</span><span class="stk-market ${marketClass}">${s.market}</span><br><span class="stk-code">${s.code}</span></td>
-      <td style="color:#94a3b8">${s.sector}</td>
-      <td style="color:#e2e8f0;font-weight:600">${s.price}</td>
-      <td class="${changeClass}">${s.change}</td>
-      <td>${s.pe === '-' ? '-' : `<div style="display:flex;align-items:center;gap:6px;justify-content:flex-end"><div class="pe-bar"><div class="pe-bar-fill ${peClass}" style="width:${peWidth}%"></div></div>${s.pe}</div>`}</td>
-      <td>${s.pb}</td>
-      <td style="color:#94a3b8">${s.eps}</td>
-      <td>${s.mcap}</td>
-      <td><span class="mc-signal signal-${s.signal}" style="font-size:10px">${s.signalText}</span></td>
-    </tr>`;
-  }).join('');
+// ===== 渲染股票池 =====
+function renderPool(){
+  document.getElementById('stkCnt').textContent=S.length+' 只标的';
+  const cats=[...new Set(S.map(s=>s.cat))];
+  const catNames={'存储芯片设计':'💾 存储芯片设计','存储模组':'📦 存储模组','内存接口':'🔌 内存接口','PCB':'🖨️ PCB','光模块':'📡 光模块','代工':'🏭 代工','散热':'❄️ 散热','存储IDM':'🌐 存储IDM（国际）'};
+  let html='';
+  cats.forEach(cat=>{
+    const stocks=S.filter(s=>s.cat===cat);
+    html+=`<div class="cat-hd">${catNames[cat]||cat}</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr>
+        <th style="text-align:left">公司</th><th>市场</th><th>主营品类</th>
+        <th>股价</th><th>涨跌</th><th>EPS(TTM)</th>
+        <th>PE</th><th>PB</th><th>ROE</th>
+        <th>价格信号</th><th>链接</th>
+      </tr></thead>
+      <tbody>`;
+    stocks.forEach(s=>{
+      const mc=s.m==='A'?'tag-a':s.m==='HK'?'tag-hk':s.m==='KR'?'tag-kr':'tag-us';
+      const ml=s.m==='A'?'A股':s.m==='HK'?'港股':s.m==='KR'?'韩股':'美股';
+      const chC=s.ch==='-'?'flat':(parseFloat(s.ch)>=0?'up':'dn');
+      const peV=s.pe==='-'?null:parseFloat(s.pe);
+      const peW=peV?Math.min(peV/60*100,100):0;
+      const peC=peV?(peV<20?'pe-lo':peV<40?'pe-mi':'pe-hi'):'';
+      const roeW=Math.min(Math.abs(s.roe)/40*100,100);
+      html+=`<tr>
+        <td><span class="stk-n">${s.n}</span><br><span class="stk-c">${s.c}</span></td>
+        <td><span class="tag ${mc}">${ml}</span></td>
+        <td style="font-size:10px;color:#64748b;max-width:160px">${s.sub}</td>
+        <td style="font-weight:600">${s.p}</td>
+        <td class="${chC}">${s.ch}</td>
+        <td>${s.eps}</td>
+        <td>${peV?`<span class="pe-bar"><span class="pe-fill ${peC}" style="width:${peW}%"></span></span> ${s.pe}`:'—'}</td>
+        <td>${s.pb}</td>
+        <td><span class="roe-bar"><span class="roe-fill" style="width:${roeW}%"></span></span> ${s.roe}%</td>
+        <td><span class="tag tag-${s.sig}">${s.sigT}</span></td>
+        <td><a class="link" href="${s.link}" target="_blank">详情→</a></td>
+      </tr>`;
+    });
+    html+='</tbody></table></div>';
+  });
+  document.getElementById('poolContent').innerHTML=html;
 }
 
-function renderQuads() {
+// ===== 渲染估值矩阵 =====
+function renderVal(){
   const q1=[],q2=[],q3=[],q4=[];
-  STOCKS.forEach(s => {
-    const peVal = s.pe === '-' ? null : parseFloat(s.pe);
-    const isHighGrowth = s.signal === 'up';
-    const isLowPE = peVal !== null && peVal < 25;
-    if(isHighGrowth && isLowPE) q1.push(s);
-    else if(isHighGrowth && !isLowPE) q2.push(s);
-    else if(!isHighGrowth && isLowPE) q3.push(s);
-    else q4.push(s);
+  S.forEach(s=>{
+    const peV=s.pe==='-'?null:parseFloat(s.pe);
+    const hi=s.sig==='up';
+    const loPE=peV!==null&&peV<25;
+    if(hi&&loPE)q1.push(s);else if(hi&&!loPE)q2.push(s);
+    else if(!hi&&loPE)q3.push(s);else q4.push(s);
   });
-  const renderList = (el, arr) => {
-    el.innerHTML = arr.length ? arr.map(s => `<li><strong>${s.name}</strong> ${s.signalText}</li>`).join('') : '<li style="color:#475569">暂无</li>';
-  };
-  renderList(document.getElementById('q1List'), q1);
-  renderList(document.getElementById('q2List'), q2);
-  renderList(document.getElementById('q3List'), q3);
-  renderList(document.getElementById('q4List'), q4);
+  const rL=(el,arr)=>{el.innerHTML=arr.length?arr.map(s=>`<li><strong>${s.n}</strong> · PE ${s.pe} · ${s.sigT}</li>`).join(''):''};
+  rL(document.getElementById('q1'),q1);rL(document.getElementById('q2'),q2);
+  rL(document.getElementById('q3'),q3);rL(document.getElementById('q4'),q4);
+
+  const d=S.filter(s=>s.pe!=='-').map(s=>({x:parseFloat(s.pe),y:s.roe,label:s.n,cat:s.cat}));
+  new Chart(document.getElementById('scChart').getContext('2d'),{
+    type:'scatter',data:{datasets:[{
+      data:d,
+      backgroundColor:d.map(d=>d.x<20?'#16a34a':d.x<35?'#d97706':'#dc2626'),
+      pointRadius:7,pointHoverRadius:9
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>`${d[c.dataIndex].label}: PE=${c.parsed.x}, ROE=${c.parsed.y}%`}}},
+      scales:{
+        x:{title:{display:true,text:'PE-TTM',color:'#64748b'},grid:{color:'#f1f5f9'},ticks:{color:'#64748b'}},
+        y:{title:{display:true,text:'ROE (%)',color:'#64748b'},grid:{color:'#f1f5f9'},ticks:{color:'#64748b'}}
+      }}
+  });
 }
 
-function renderReports() {
-  document.getElementById('reportList').innerHTML = REPORTS.map(r => `
-    <div class="report-item">
-      <div class="report-left">
-        <div class="report-title">${r.title}</div>
-        <div class="report-meta">${r.org} · ${r.date} · 目标价 ${r.target}</div>
-      </div>
-      <span class="report-rating ${r.ratingClass}">${r.rating}</span>
-    </div>
+// ===== 渲染研报 =====
+function renderRpt(){
+  document.getElementById('rptList').innerHTML=RPT.map(r=>`
+    <div class="rpt"><div class="rpt-l"><div class="rpt-t">${r.t}</div><div class="rpt-m">${r.o} · ${r.d} · 目标价 ${r.tp}</div></div><span class="tag ${r.rc}">${r.r}</span></div>
   `).join('');
 }
 
-function renderScatter() {
-  const data = STOCKS.filter(s => s.pe !== '-' && s.pb !== '-').map(s => ({
-    x: parseFloat(s.pe),
-    y: parseFloat(s.pb),
-    label: s.name
-  }));
-  const ctx = document.getElementById('scatterChart').getContext('2d');
-  new Chart(ctx, {
-    type: 'scatter',
-    data: {
-      datasets: [{
-        data: data,
-        backgroundColor: data.map(d => d.x < 25 ? '#16a34a' : (d.x < 40 ? '#d97706' : '#dc2626')),
-        pointRadius: 8,
-        pointHoverRadius: 10,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {display: false},
-        tooltip: {
-          callbacks: {
-            label: ctx => `${data[ctx.dataIndex].label}: PE=${ctx.parsed.x}, PB=${ctx.parsed.y}`
-          }
-        }
-      },
-      scales: {
-        x: {title:{display:true,text:'PE-TTM',color:'#64748b'},grid:{color:'#f1f5f9'},ticks:{color:'#64748b'}},
-        y: {title:{display:true,text:'PB',color:'#64748b'},grid:{color:'#f1f5f9'},ticks:{color:'#64748b'}}
-      }
-    }
-  });
-}
-
-// ===== Try to fetch real-time data =====
-async function fetchStockPrices() {
-  // Try East Money API for A-shares
-  const codes = STOCKS.filter(s => s.market === 'A').map(s => {
-    const prefix = s.code.startsWith('6') ? '1.' : '0.';
-    return prefix + s.code;
-  }).join(',');
-
-  try {
-    const resp = await fetch(`https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&fields=f2,f3,f12,f14,f9,f23,f20&secids=${codes}`);
-    const data = await resp.json();
-    if(data && data.data && data.data.diff) {
-      data.data.diff.forEach(d => {
-        const stock = STOCKS.find(s => s.code === d.f12);
-        if(stock) {
-          stock.price = d.f2 ? d.f2.toFixed(2) : '-';
-          stock.change = d.f3 ? (d.f3 > 0 ? '+' : '') + d.f3.toFixed(2) + '%' : '-';
-          stock.pe = d.f9 ? d.f9.toFixed(1) : '-';
-          stock.pb = d.f23 ? d.f23.toFixed(2) : '-';
-          stock.mcap = d.f20 ? (d.f20 / 100000000).toFixed(0) : '-';
-        }
+// ===== 尝试获取实时数据 =====
+async function fetchPrices(){
+  const codes=S.filter(s=>s.m==='A').map(s=>(s.c.startsWith('6')||s.c.startsWith('9')?'1.':'0.')+s.c).join(',');
+  try{
+    const r=await fetch(`https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&fields=f2,f3,f12,f14,f9,f23,f20&secids=${codes}`);
+    const d=await r.json();
+    if(d?.data?.diff){
+      d.data.diff.forEach(x=>{
+        const s=S.find(s=>s.c===x.f12);
+        if(s){s.p=x.f2?.toFixed(2)||'-';s.ch=x.f3?((x.f3>0?'+':'')+x.f3.toFixed(2)+'%'):'-';s.pe=x.f9?.toFixed(1)||'-';s.pb=x.f23?.toFixed(2)||'-'}
       });
     }
-  } catch(e) {
-    console.log('A-share data fetch failed, using static data');
-  }
-  renderStocks();
-  renderQuads();
+  }catch(e){console.log('API fetch failed')}
+  renderPool();renderVal();
 }
 
 // ===== Init =====
-document.getElementById('updateTime').textContent = '数据更新：' + new Date().toLocaleDateString('zh-CN');
-renderMappings();
-renderStocks();
-renderQuads();
-renderReports();
-renderScatter();
-fetchStockPrices();
+document.getElementById('updateTime').textContent='数据更新：'+new Date().toLocaleDateString('zh-CN');
+renderMap();renderPool();renderVal();renderRpt();fetchPrices();
 </script>
 </body>
 </html>
