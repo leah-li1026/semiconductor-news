@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>半导体产业链投资分析</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:#0a0e1a;color:#e2e8f0;min-height:100vh}
+.header{background:linear-gradient(135deg,#0f1629,#0a0e1a);border-bottom:1px solid #1e293b;padding:16px 0;position:sticky;top:0;z-index:100;backdrop-filter:blur(20px)}
+.header-inner{max-width:1400px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-icon{width:42px;height:42px;background:linear-gradient(135deg,#f59e0b,#ef4444);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 15px rgba(245,158,11,0.3)}
+.logo h1{font-size:20px;font-weight:700;background:linear-gradient(90deg,#fbbf24,#f87171,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-sub{font-size:11px;color:#64748b;margin-top:2px}
+.header-right{display:flex;align-items:center;gap:12px}
+.date-info{color:#94a3b8;font-size:12px}
+.nav{max-width:1400px;margin:0 auto;padding:10px 24px;display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid #1e293b}
+.nav-btn{padding:7px 14px;border-radius:8px;border:1px solid transparent;background:transparent;color:#64748b;cursor:pointer;font-size:13px;transition:.2s}
+.nav-btn:hover{background:#1e293b;color:#94a3b8}
+.nav-btn.active{background:#1e293b;border-color:#334155;color:#e2e8f0}
+.container{max-width:1400px;margin:0 auto;padding:20px 24px 40px}
+.section{margin-bottom:28px}
+.section-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #1e293b}
+.section-icon{font-size:18px}
+.section-title{font-size:17px;font-weight:600;color:#f1f5f9}
+.section-badge{font-size:11px;color:#64748b;background:#1e293b;padding:3px 10px;border-radius:10px;margin-left:auto}
+
+/* Price-Stock Mapping */
+.mapping-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.mapping-card{background:#111827;border:1px solid #1e293b;border-radius:10px;padding:14px;transition:.2s}
+.mapping-card:hover{border-color:#334155}
+.mapping-card .mc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.mapping-card .mc-cat{font-size:11px;color:#94a3b8;background:#1e293b;padding:2px 8px;border-radius:6px}
+.mapping-card .mc-signal{font-size:11px;padding:2px 8px;border-radius:6px;font-weight:600}
+.signal-up{background:rgba(239,68,68,0.15);color:#f87171}
+.signal-down{background:rgba(34,197,94,0.15);color:#22c55e}
+.signal-flat{background:rgba(100,116,139,0.15);color:#94a3b8}
+.signal-warn{background:rgba(245,158,11,0.15);color:#fbbf24}
+.mapping-card .mc-title{font-size:14px;font-weight:600;margin-bottom:6px}
+.mapping-card .mc-price{font-size:12px;color:#94a3b8;margin-bottom:8px}
+.mapping-card .mc-stocks{display:flex;flex-wrap:wrap;gap:6px}
+.stock-tag{font-size:11px;padding:3px 8px;border-radius:6px;background:#1e293b;color:#60a5fa;border:1px solid #334155;cursor:pointer;transition:.15s}
+.stock-tag:hover{background:#334155;color:#93c5fd}
+
+/* Stock Pool Table */
+.stock-table-wrap{overflow-x:auto}
+.stock-table{width:100%;border-collapse:collapse;font-size:12px}
+.stock-table thead th{background:rgba(59,130,246,0.06);padding:10px 12px;text-align:right;font-weight:600;color:#94a3b8;font-size:11px;white-space:nowrap;border-bottom:1px solid #1e293b;position:sticky;top:0}
+.stock-table thead th:first-child{text-align:left}
+.stock-table tbody td{padding:10px 12px;text-align:right;border-bottom:1px solid rgba(30,41,59,0.5);white-space:nowrap}
+.stock-table tbody td:first-child{text-align:left;font-weight:500}
+.stock-table tbody tr:hover{background:rgba(59,130,246,0.04)}
+.stock-table .up{color:#f87171}.stock-table .down{color:#22c55e}.stock-table .flat{color:#64748b}
+.stock-table .stk-name{color:#e2e8f0;font-weight:600}
+.stock-table .stk-code{color:#64748b;font-size:10px}
+.stock-table .stk-market{font-size:9px;padding:1px 5px;border-radius:4px;margin-left:4px}
+.market-a{background:rgba(239,68,68,0.12);color:#f87171}
+.market-hk{background:rgba(245,158,11,0.12);color:#fbbf24}
+.market-us{background:rgba(59,130,246,0.12);color:#60a5fa}
+.market-kr{background:rgba(168,85,247,0.12);color:#a78bfa}
+.pe-bar{height:6px;border-radius:3px;background:#1e293b;overflow:hidden;min-width:60px}
+.pe-bar-fill{height:100%;border-radius:3px}
+.pe-low{background:#22c55e}.pe-mid{background:#fbbf24}.pe-high{background:#f87171}
+
+/* Valuation Matrix */
+.matrix-container{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:768px){.matrix-container{grid-template-columns:1fr}.mapping-grid{grid-template-columns:1fr}}
+.matrix-card{background:#111827;border:1px solid #1e293b;border-radius:10px;padding:16px}
+.matrix-card h3{font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.matrix-card .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.quad-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.quad{border:1px solid #1e293b;border-radius:8px;padding:10px;min-height:80px}
+.quad h4{font-size:11px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:4px}
+.quad .q-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.quad ul{list-style:none;font-size:11px}
+.quad li{padding:2px 0;color:#94a3b8}
+.quad li strong{color:#e2e8f0}
+.q1{border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.04)}
+.q2{border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.04)}
+.q3{border-color:rgba(100,116,139,0.3);background:rgba(100,116,139,0.04)}
+.q4{border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.04)}
+
+/* Research Reports */
+.report-list{display:grid;gap:10px}
+.report-item{background:#111827;border:1px solid #1e293b;border-radius:8px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;transition:.15s}
+.report-item:hover{border-color:#334155}
+.report-left{flex:1}
+.report-title{font-size:13px;font-weight:500;color:#e2e8f0;margin-bottom:4px}
+.report-meta{font-size:11px;color:#64748b}
+.report-rating{font-size:11px;padding:3px 10px;border-radius:6px;font-weight:600;white-space:nowrap}
+.rating-buy{background:rgba(239,68,68,0.15);color:#f87171}
+.rating-hold{background:rgba(245,158,11,0.15);color:#fbbf24}
+.rating-outperform{background:rgba(59,130,246,0.15);color:#60a5fa}
+
+/* Insight */
+.insight{background:linear-gradient(135deg,rgba(59,130,246,0.06),rgba(168,85,247,0.04));border:1px solid rgba(59,130,246,0.15);border-radius:10px;padding:18px;margin-top:20px}
+.insight h4{color:#60a5fa;font-size:13px;margin-bottom:10px}
+.insight ul{list-style:none}
+.insight li{font-size:12px;padding:4px 0 4px 18px;position:relative;color:#e2e8f0}
+.insight li::before{content:'→';position:absolute;left:0;color:#60a5fa}
+.insight li strong{color:#60a5fa}
+
+.footer{text-align:center;padding:24px 0 8px;color:#1e293b;font-size:10px;border-top:1px solid #1e293b;margin-top:32px}
+.loading{display:flex;align-items:center;justify-content:center;padding:40px;color:#64748b;font-size:13px}
+.spinner{width:20px;height:20px;border:2px solid #1e293b;border-top-color:#3b82f6;border-radius:50%;animation:spin 1s linear infinite;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">📊</div>
+      <div>
+        <h1>半导体产业链投资分析</h1>
+        <div class="logo-sub">价格趋势 × 估值分析 × 投资价值</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="date-info" id="updateTime">更新中...</div>
+    </div>
+  </div>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="switchTab('all',this)">📋 全部</button>
+  <button class="nav-btn" onclick="switchTab('mapping',this)">🔗 价格-股票映射</button>
+  <button class="nav-btn" onclick="switchTab('pool',this)">📈 重点股票池</button>
+  <button class="nav-btn" onclick="switchTab('valuation',this)">🎯 估值分析</button>
+  <button class="nav-btn" onclick="switchTab('report',this)">📰 研报精选</button>
+</div>
+
+<div class="container">
+
+<!-- ===== 价格-股票映射 ===== -->
+<div class="section tab-section" data-tab="mapping">
+  <div class="section-header">
+    <span class="section-icon">🔗</span>
+    <span class="section-title">存储价格 → 关联股票映射</span>
+    <span class="section-badge">价格涨跌 → 受益/受损标的</span>
+  </div>
+  <div class="mapping-grid" id="mappingGrid"></div>
+</div>
+
+<!-- ===== 重点股票池 ===== -->
+<div class="section tab-section" data-tab="pool">
+  <div class="section-header">
+    <span class="section-icon">📈</span>
+    <span class="section-title">半导体产业链重点股票池</span>
+    <span class="section-badge" id="stockCount">-</span>
+  </div>
+  <div class="stock-table-wrap">
+    <table class="stock-table" id="stockTable">
+      <thead>
+        <tr>
+          <th style="text-align:left">公司</th>
+          <th>环节</th>
+          <th>股价</th>
+          <th>涨跌幅</th>
+          <th>PE-TTM</th>
+          <th>PB</th>
+          <th>EPS(TTM)</th>
+          <th>市值(亿)</th>
+          <th>价格信号</th>
+        </tr>
+      </thead>
+      <tbody id="stockBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== 估值分析 ===== -->
+<div class="section tab-section" data-tab="valuation">
+  <div class="section-header">
+    <span class="section-icon">🎯</span>
+    <span class="section-title">投资价值矩阵</span>
+    <span class="section-badge">景气度 × 估值水平</span>
+  </div>
+  <div class="matrix-container">
+    <div class="matrix-card">
+      <h3><span class="dot" style="background:#22c55e"></span>投资价值四象限</h3>
+      <div style="font-size:11px;color:#64748b;margin-bottom:10px;">X轴：关联存储价格趋势（涨→跌）&nbsp;&nbsp;Y轴：PE估值水平（低→高）</div>
+      <div class="quad-grid">
+        <div class="quad q1">
+          <h4><span class="q-dot" style="background:#22c55e"></span> ⭐ 高景气 + 低估值</h4>
+          <ul id="q1List"></ul>
+        </div>
+        <div class="quad q2">
+          <h4><span class="q-dot" style="background:#fbbf24"></span> 📊 高景气 + 高估值</h4>
+          <ul id="q2List"></ul>
+        </div>
+        <div class="quad q3">
+          <h4><span class="q-dot" style="background:#64748b"></span> 💤 低景气 + 低估值</h4>
+          <ul id="q3List"></ul>
+        </div>
+        <div class="quad q4">
+          <h4><span class="q-dot" style="background:#f87171"></span> ⚠️ 低景气 + 高估值</h4>
+          <ul id="q4List"></ul>
+        </div>
+      </div>
+    </div>
+    <div class="matrix-card">
+      <h3><span class="dot" style="background:#60a5fa"></span>PE-PB 散点分布</h3>
+      <div style="height:300px;"><canvas id="scatterChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 研报精选 ===== -->
+<div class="section tab-section" data-tab="report">
+  <div class="section-header">
+    <span class="section-icon">📰</span>
+    <span class="section-title">券商研报精选</span>
+    <span class="section-badge">最新机构观点</span>
+  </div>
+  <div class="report-list" id="reportList"></div>
+</div>
+
+<!-- ===== 投资洞察 ===== -->
+<div class="section">
+  <div class="insight">
+    <h4>💡 投资洞察 — 基于价格趋势+估值分析</h4>
+    <ul>
+      <li><strong>存储涨价主线：</strong>NAND Wafer原厂涨价意向明确+MLC停供，利好上游存储芯片设计公司（兆易创新、北京君正）。模组厂（江波龙、佰维存储）短期承压但中期受益。</li>
+      <li><strong>DDR5放量主线：</strong>DDR5渠道/行业颗粒持续涨价，Q3合约预涨20%。澜起科技（接口芯片）直接受益于DDR5渗透率提升。</li>
+      <li><strong>AI服务器主线：</strong>企业级SSD涨幅收窄但趋势延续，DDR5现货冲高。沪电股份（高端PCB）、中际旭创（光模块）、工业富联（代工）持续受益。</li>
+      <li><strong>估值分化：</strong>A股半导体PE普遍高于海外，但成长性更强。关注PE低于行业中位数+景气度向上的标的。</li>
+      <li><strong>风险提示：</strong>存储价格波动大，消费级需求疲软，地缘政治风险，估值回调压力。</li>
+    </ul>
+  </div>
+</div>
+
+</div>
+
+<div class="footer">
+  半导体产业链投资分析 · 价格数据来源于中国闪存市场 · 财务数据来源于公开财报 · 仅供学习参考，不构成投资建议
+</div>
+
+<script>
+// ===== Tab Switching =====
+function switchTab(tab, btn) {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tab-section').forEach(s => {
+    s.style.display = (tab === 'all' || s.dataset.tab === tab) ? 'block' : 'none';
+  });
+}
+
+// ===== Data =====
+const STOCKS = [
+  {name:'兆易创新',code:'603986',market:'A',sector:'存储芯片设计',price:'-',change:'-',pe:'-',pb:'-',eps:2.47,epsQ1:2.08,bvps:36.05,mcap:'-',signal:'up',signalText:'涨价受益',note:'NOR/NAND/MCU龙头'},
+  {name:'北京君正',code:'300223',market:'A',sector:'存储芯片设计',price:'-',change:'-',pe:'-',pb:'-',eps:1.85,epsQ1:0.52,bvps:22.30,mcap:'-',signal:'up',signalText:'涨价受益',note:'DRAM+处理器'},
+  {name:'东芯股份',code:'688110',market:'A',sector:'存储芯片设计',price:'-',change:'-',pe:'-',pb:'-',eps:0.45,epsQ1:0.15,bvps:12.80,mcap:'-',signal:'up',signalText:'涨价受益',note:'NAND/NOR/DRAM'},
+  {name:'江波龙',code:'301308',market:'A',sector:'存储模组',price:'-',change:'-',pe:'-',pb:'-',eps:3.20,epsQ1:0.85,bvps:28.50,mcap:'-',signal:'warn',signalText:'成本承压',note:'FORESEE+Lexar品牌'},
+  {name:'佰维存储',code:'688525',market:'A',sector:'存储模组',price:'-',change:'-',pe:'-',pb:'-',eps:1.60,epsQ1:0.42,bvps:15.20,mcap:'-',signal:'warn',signalText:'成本承压',note:'嵌入式存储'},
+  {name:'德明利',code:'301007',market:'A',sector:'存储模组',price:'-',change:'-',pe:'-',pb:'-',eps:0.95,epsQ1:0.28,bvps:8.60,mcap:'-',signal:'warn',signalText:'成本承压',note:'存储模组'},
+  {name:'澜起科技',code:'688008',market:'A',sector:'内存接口',price:'-',change:'-',pe:'-',pb:'-',eps:2.80,epsQ1:0.75,bvps:18.50,mcap:'-',signal:'up',signalText:'DDR5放量',note:'DDR5接口芯片'},
+  {name:'沪电股份',code:'002463',market:'A',sector:'PCB',price:'-',change:'-',pe:'-',pb:'-',eps:1.35,epsQ1:0.38,bvps:8.90,mcap:'-',signal:'up',signalText:'AI服务器',note:'高端服务器PCB'},
+  {name:'中际旭创',code:'300308',market:'A',sector:'光模块',price:'-',change:'-',pe:'-',pb:'-',eps:5.60,epsQ1:1.80,bvps:22.40,mcap:'-',signal:'up',signalText:'800G放量',note:'800G/1.6T光模块'},
+  {name:'工业富联',code:'601138',market:'A',sector:'代工',price:'-',change:'-',pe:'-',pb:'-',eps:2.10,epsQ1:0.58,bvps:12.30,mcap:'-',signal:'up',signalText:'AI服务器',note:'服务器组装龙头'},
+  {name:'英维克',code:'002837',market:'A',sector:'散热',price:'-',change:'-',pe:'-',pb:'-',eps:0.85,epsQ1:0.22,bvps:5.60,mcap:'-',signal:'up',signalText:'液冷渗透',note:'液冷散热'},
+  {name:'三星电子',code:'005930',market:'KR',sector:'存储IDM',price:'-',change:'-',pe:'-',pb:'-',eps:5200,epsQ1:1450,bvps:52000,mcap:'-',signal:'up',signalText:'涨价龙头',note:'全球存储龙头'},
+  {name:'SK海力士',code:'000660',market:'KR',sector:'存储IDM',price:'-',change:'-',pe:'-',pb:'-',eps:18000,epsQ1:5200,bvps:85000,mcap:'-',signal:'up',signalText:'HBM供不应求',note:'HBM全球第一'},
+  {name:'美光科技',code:'MU',market:'US',sector:'存储IDM',price:'-',change:'-',pe:'-',pb:'-',eps:8.50,epsQ1:2.60,bvps:42.00,mcap:'-',signal:'up',signalText:'AI驱动',note:'DRAM+NAND'},
+];
+
+const MAPPINGS = [
+  {cat:'存储芯片',title:'NAND Wafer',price:'$26.50~$29.00',signal:'warn',signalText:'原厂涨价意向',stocks:['兆易创新','东芯股份','三星电子','SK海力士','美光科技']},
+  {cat:'存储芯片',title:'DRAM现货 (DDR4 eTT)',price:'$7.80',signal:'up',signalText:'+5.41%',stocks:['北京君正','兆易创新','三星电子','SK海力士']},
+  {cat:'存储芯片',title:'DDR5 渠道/行业颗粒',price:'$22.50~$115',signal:'up',signalText:'持续涨价',stocks:['澜起科技','江波龙','佰维存储']},
+  {cat:'服务器',title:'DDR5 RDIMM 合约价',price:'$730~$2,310',signal:'flat',signalText:'7月持平',stocks:['澜起科技','工业富联','沪电股份']},
+  {cat:'服务器',title:'企业级SSD',price:'$75~$400',signal:'warn',signalText:'涨幅收窄1.4%',stocks:['佰维存储','江波龙','德明利']},
+  {cat:'移动',title:'LPDDR5X',price:'$114~$235',signal:'flat',signalText:'趋稳',stocks:['兆易创新','北京君正']},
+  {cat:'消费',title:'消费级SSD',price:'$38~$250',signal:'flat',signalText:'全线持平',stocks:['江波龙','佰维存储','德明利']},
+  {cat:'AI基础设施',title:'HBM3e',price:'极度紧缺',signal:'up',signalText:'交期>6月',stocks:['SK海力士','三星电子','英维克']},
+  {cat:'AI基础设施',title:'800G光模块',price:'产能紧张',signal:'up',signalText:'放量中',stocks:['中际旭创']},
+  {cat:'AI基础设施',title:'高端服务器PCB',price:'供应偏紧',signal:'up',signalText:'需求旺盛',stocks:['沪电股份']},
+];
+
+const REPORTS = [
+  {title:'兆易创新：存储+MCU双轮驱动，AI终端打开成长空间',org:'华泰证券',date:'2026-07-05',rating:'买入',ratingClass:'rating-buy',target:'180元'},
+  {title:'澜起科技：DDR5渗透率提升，接口芯片量价齐升',org:'中金公司',date:'2026-07-04',rating:'跑赢行业',ratingClass:'rating-outperform',target:'120元'},
+  {title:'江波龙：存储涨价周期受益，品牌+渠道双壁垒',org:'招商证券',date:'2026-07-03',rating:'增持',ratingClass:'rating-buy',target:'150元'},
+  {title:'沪电股份：AI服务器PCB龙头，高端产能持续扩张',org:'国金证券',date:'2026-07-03',rating:'买入',ratingClass:'rating-buy',target:'45元'},
+  {title:'中际旭创：800G光模块放量，1.6T产品蓄势待发',org:'光大证券',date:'2026-07-02',rating:'买入',ratingClass:'rating-buy',target:'200元'},
+  {title:'工业富联：AI服务器组装龙头，GB200量产带来业绩弹性',org:'中信证券',date:'2026-07-01',rating:'买入',ratingClass:'rating-buy',target:'35元'},
+  {title:'SK海力士：HBM供不应求，Q3合约价预涨20%提升盈利',org:'摩根士丹利',date:'2026-06-30',rating:'增持',ratingClass:'rating-buy',target:'KRW 280,000'},
+  {title:'存储行业：下半年涨价趋势确立，关注结构性紧缺',org:'中信建投',date:'2026-06-28',rating:'强于大市',ratingClass:'rating-outperform',target:'—'},
+];
+
+// ===== Render Functions =====
+function renderMappings() {
+  const grid = document.getElementById('mappingGrid');
+  grid.innerHTML = MAPPINGS.map(m => `
+    <div class="mapping-card">
+      <div class="mc-header">
+        <span class="mc-cat">${m.cat}</span>
+        <span class="mc-signal signal-${m.signal}">${m.signalText}</span>
+      </div>
+      <div class="mc-title">${m.title}</div>
+      <div class="mc-price">${m.price}</div>
+      <div class="mc-stocks">${m.stocks.map(s => `<span class="stock-tag">${s}</span>`).join('')}</div>
+    </div>
+  `).join('');
+}
+
+function renderStocks() {
+  const body = document.getElementById('stockBody');
+  document.getElementById('stockCount').textContent = STOCKS.length + ' 只标的';
+  body.innerHTML = STOCKS.map(s => {
+    const changeClass = s.change === '-' ? 'flat' : (parseFloat(s.change) >= 0 ? 'up' : 'down');
+    const peClass = s.pe === '-' ? '' : (parseFloat(s.pe) < 20 ? 'pe-low' : (parseFloat(s.pe) < 40 ? 'pe-mid' : 'pe-high'));
+    const peWidth = s.pe === '-' ? 0 : Math.min(parseFloat(s.pe) / 60 * 100, 100);
+    const marketClass = s.market === 'A' ? 'market-a' : (s.market === 'HK' ? 'market-hk' : (s.market === 'KR' ? 'market-kr' : 'market-us'));
+    return `<tr>
+      <td><span class="stk-name">${s.name}</span><span class="stk-market ${marketClass}">${s.market}</span><br><span class="stk-code">${s.code}</span></td>
+      <td style="color:#94a3b8">${s.sector}</td>
+      <td style="color:#e2e8f0;font-weight:600">${s.price}</td>
+      <td class="${changeClass}">${s.change}</td>
+      <td>${s.pe === '-' ? '-' : `<div style="display:flex;align-items:center;gap:6px;justify-content:flex-end"><div class="pe-bar"><div class="pe-bar-fill ${peClass}" style="width:${peWidth}%"></div></div>${s.pe}</div>`}</td>
+      <td>${s.pb}</td>
+      <td style="color:#94a3b8">${s.eps}</td>
+      <td>${s.mcap}</td>
+      <td><span class="mc-signal signal-${s.signal}" style="font-size:10px">${s.signalText}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderQuads() {
+  const q1=[],q2=[],q3=[],q4=[];
+  STOCKS.forEach(s => {
+    const peVal = s.pe === '-' ? null : parseFloat(s.pe);
+    const isHighGrowth = s.signal === 'up';
+    const isLowPE = peVal !== null && peVal < 25;
+    if(isHighGrowth && isLowPE) q1.push(s);
+    else if(isHighGrowth && !isLowPE) q2.push(s);
+    else if(!isHighGrowth && isLowPE) q3.push(s);
+    else q4.push(s);
+  });
+  const renderList = (el, arr) => {
+    el.innerHTML = arr.length ? arr.map(s => `<li><strong>${s.name}</strong> ${s.signalText}</li>`).join('') : '<li style="color:#475569">暂无</li>';
+  };
+  renderList(document.getElementById('q1List'), q1);
+  renderList(document.getElementById('q2List'), q2);
+  renderList(document.getElementById('q3List'), q3);
+  renderList(document.getElementById('q4List'), q4);
+}
+
+function renderReports() {
+  document.getElementById('reportList').innerHTML = REPORTS.map(r => `
+    <div class="report-item">
+      <div class="report-left">
+        <div class="report-title">${r.title}</div>
+        <div class="report-meta">${r.org} · ${r.date} · 目标价 ${r.target}</div>
+      </div>
+      <span class="report-rating ${r.ratingClass}">${r.rating}</span>
+    </div>
+  `).join('');
+}
+
+function renderScatter() {
+  const data = STOCKS.filter(s => s.pe !== '-' && s.pb !== '-').map(s => ({
+    x: parseFloat(s.pe),
+    y: parseFloat(s.pb),
+    label: s.name
+  }));
+  const ctx = document.getElementById('scatterChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [{
+        data: data,
+        backgroundColor: data.map(d => d.x < 25 ? '#22c55e' : (d.x < 40 ? '#fbbf24' : '#f87171')),
+        pointRadius: 8,
+        pointHoverRadius: 10,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {display: false},
+        tooltip: {
+          callbacks: {
+            label: ctx => `${data[ctx.dataIndex].label}: PE=${ctx.parsed.x}, PB=${ctx.parsed.y}`
+          }
+        }
+      },
+      scales: {
+        x: {title:{display:true,text:'PE-TTM',color:'#94a3b8'},grid:{color:'#1e293b'},ticks:{color:'#64748b'}},
+        y: {title:{display:true,text:'PB',color:'#94a3b8'},grid:{color:'#1e293b'},ticks:{color:'#64748b'}}
+      }
+    }
+  });
+}
+
+// ===== Try to fetch real-time data =====
+async function fetchStockPrices() {
+  // Try East Money API for A-shares
+  const codes = STOCKS.filter(s => s.market === 'A').map(s => {
+    const prefix = s.code.startsWith('6') ? '1.' : '0.';
+    return prefix + s.code;
+  }).join(',');
+
+  try {
+    const resp = await fetch(`https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&fields=f2,f3,f12,f14,f9,f23,f20&secids=${codes}`);
+    const data = await resp.json();
+    if(data && data.data && data.data.diff) {
+      data.data.diff.forEach(d => {
+        const stock = STOCKS.find(s => s.code === d.f12);
+        if(stock) {
+          stock.price = d.f2 ? d.f2.toFixed(2) : '-';
+          stock.change = d.f3 ? (d.f3 > 0 ? '+' : '') + d.f3.toFixed(2) + '%' : '-';
+          stock.pe = d.f9 ? d.f9.toFixed(1) : '-';
+          stock.pb = d.f23 ? d.f23.toFixed(2) : '-';
+          stock.mcap = d.f20 ? (d.f20 / 100000000).toFixed(0) : '-';
+        }
+      });
+    }
+  } catch(e) {
+    console.log('A-share data fetch failed, using static data');
+  }
+  renderStocks();
+  renderQuads();
+}
+
+// ===== Init =====
+document.getElementById('updateTime').textContent = '数据更新：' + new Date().toLocaleDateString('zh-CN');
+renderMappings();
+renderStocks();
+renderQuads();
+renderReports();
+renderScatter();
+fetchStockPrices();
+</script>
+</body>
+</html>
