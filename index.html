@@ -176,6 +176,36 @@
             border-radius: 8px; border: 1px dashed #1e293b;
         }
 
+        /* ========== 价格-股票映射 ========== */
+        .mapping-section { margin-bottom: 28px; }
+        .mapping-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px;
+        }
+        .map-card {
+            background: #111827; border: 1px solid #1e293b; border-radius: 12px;
+            padding: 14px; transition: all 0.2s;
+        }
+        .map-card:hover { border-color: #334155; transform: translateY(-1px); }
+        .map-card-hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .map-card-cat { font-size: 10px; color: #94a3b8; background: #1e293b; padding: 2px 7px; border-radius: 5px; }
+        .map-card-signal { font-size: 10px; padding: 2px 7px; border-radius: 5px; font-weight: 600; }
+        .map-card-title { font-size: 13px; font-weight: 600; color: #e2e8f0; margin-bottom: 4px; }
+        .map-card-price { font-size: 11px; color: #94a3b8; margin-bottom: 8px; }
+        .map-card-stocks { display: flex; flex-wrap: wrap; gap: 5px; }
+        .map-stk {
+            font-size: 10px; padding: 2px 7px; border-radius: 5px;
+            background: rgba(59,130,246,0.1); color: #60a5fa; border: 1px solid rgba(59,130,246,0.2);
+        }
+        .map-stk.hurt { background: rgba(239,68,68,0.1); color: #f87171; border-color: rgba(239,68,68,0.2); }
+        .map-divider { border-top: 1px solid #1e293b; margin: 8px 0; }
+        .map-card-note { font-size: 10px; color: #475569; margin-top: 6px; }
+        .map-link {
+            display: inline-block; margin-top: 10px; font-size: 11px; color: #60a5fa;
+            text-decoration: none; padding: 4px 10px; border: 1px solid rgba(59,130,246,0.2);
+            border-radius: 6px; transition: all 0.15s;
+        }
+        .map-link:hover { background: rgba(59,130,246,0.1); color: #93c5fd; }
+
         /* ========== 产业机会 ========== */
         .oppo-grid {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -584,6 +614,177 @@
                 </table>
                 <div class="manual-notice">📝 价格来源于行业参考报价，需定期手动更新</div>
             </div>
+        </div>
+    </div>
+
+    <!-- ===== 价格-股票映射 ===== -->
+    <div class="section tab-section mapping-section" data-tab="opportunity">
+        <div class="section-header">
+            <span class="section-icon">🔗</span>
+            <span class="section-title">存储价格 → 关联上市公司</span>
+            <span class="section-badge">价格涨跌 → 受益 / 受损标的</span>
+        </div>
+        <div class="mapping-grid">
+            <!-- NAND Wafer -->
+            <div class="map-card">
+                <div class="map-card-hd">
+                    <span class="map-card-cat">存储芯片</span>
+                    <span class="map-card-signal" style="background:rgba(245,158,11,0.15);color:#fbbf24">⚠️ 原厂涨价意向</span>
+                </div>
+                <div class="map-card-title">NAND Wafer 现货</div>
+                <div class="map-card-price">$26.50~$29.00 · 全线持平 · MLC停供</div>
+                <div class="map-card-stocks">
+                    <span class="map-stk">兆易创新 🟢涨价受益</span>
+                    <span class="map-stk">东芯股份 🟢涨价受益</span>
+                    <span class="map-stk">三星电子 🟢涨价受益</span>
+                    <span class="map-stk">SK海力士 🟢涨价受益</span>
+                    <span class="map-stk">美光科技 🟢涨价受益</span>
+                </div>
+                <div class="map-card-note">💡 Wafer涨价利好上游芯片设计/IDM，模组厂成本承压</div>
+            </div>
+
+            <!-- DDR4 eTT -->
+            <div class="map-card">
+                <div class="map-card-hd">
+                    <span class="map-card-cat">存储芯片</span>
+                    <span class="map-card-signal" style="background:rgba(239,68,68,0.15);color:#f87171">🔥 +5.41%</span>
+                </div>
+                <div class="map-card-title">DDR4 8Gb eTT 现货</div>
+                <div class="map-card-price">$7.80 · 单日暴涨5.41% · 结构性紧缺</div>
+                <div class="map-card-stocks">
+                    <span class="map-stk">兆易创新 🟢涨价受益</span>
+                    <span class="map-stk">北京君正 🟢涨价受益</span>
+                    <span class="map-stk">普冉股份 🟢涨价受益</span>
+                </div>
+                <div class="map-card-note">💡 DDR4 eTT暴涨反映低端存储结构性紧缺信号</div>
+            </div>
+
+            <!-- DDR5 渠道 -->
+            <div class="map-card">
+                <div class="map-card-hd">
+                    <span class="map-card-cat">存储芯片</span>
+                    <span class="map-card-signal" style="background:rgba(239,68,68,0.15);color:#f87171">🔥 SODIMM+4.55%</span>
+                </div>
+                <div class="map-card-title">DDR5 渠道/行业颗粒</div>
+                <div class="map-card-price">$22.50~$115 · PC OEM预锁配额 · H2收紧</div>
+                <div class="map-card-stocks">
+                    <span class="map-stk">澜起科技 🟢DDR5放量</span>
+                    <span class="map-stk">江波龙 🟡成本承压</span>
+                    <span class="map-stk">佰维存储 🟡成本承压</span>
+                </div>
+                <div class="map-card-note">💡 DDR5接口芯片直接受益，模组厂短期承压中期受益</div>
+            </div>
+
+            <!-- DDR5 服务器合约 -->
+            <div class="map-card">
+                <div class="map-card-hd">
+                    <span class="map-card-cat">服务器</span>
+                    <span class="map-card-signal" style="background:rgba(245,158,11,0.15);color:#fbbf24">⚠️ Q3预涨20%</span>
+                </div>
+                <div class="map-card-title">DDR5 RDIMM 合约价</div>
+                <div class="map-card-price">$730~$2,310 · 7月持平 · 现货冲$3,300月高</div>
+                <div class="map-card-stocks">
+                    <span class="map-stk">澜起科技 🟢接口芯片</span>
+                    <span class="map-stk">工业富联 🟢服务器代工</span>
+                    <span class="map-stk">沪电股份 🟢高端PCB</span>
+                </div>
+                <div class="map-card-note">💡 Q3合约预涨20%，服务器产业链量价齐升</div>
+            </div>
+
+            <!-- 企业级SSD -->
+            <div class="map-card">
+                <div class="map-card-hd">
+                    <span class="map-card-cat">服务器</span>
+                    <span class="map-card-signal" style="background:rgba(245,158,11,0.15);color:#fbbf24">涨幅收窄1.4%</span>
+                </div>
+                <div class="map-card-title">企业级SSD</div>
+                <div class="map-card-price">$75~$400 · 前期大涨后趋稳</div>
+                <div class="map-card-stocks">
+                    <span class="map-stk">佰维存储 🟢存储模组</span>
+                    <span class="map-stk">江波龙 🟢存储模组</span>
+                    <span class="map-stk">德明利 🟢存储模组</span>
+                </div>
+                <div class="map-card-note">💡 涨幅收窄但趋势延续，模组厂ASP和毛利率提升</div>
+            </div>
+
+            <!-- HBM -->
+            <div class="map-card">
+                <div class="map-card-hd">
+                    <span class="map-card-cat">AI基础设施</span>
+                    <span class="map-card-signal" style="background:rgba(239,68,68,0.15);color:#f87171">🔴 极度紧缺</span>
+                </div>
+                <div class="map-card-title">HBM3e</div>
+                <div class="map-card-price">交期>6个月 · 供不应求</div>
+                <div class="map-card-stocks">
+                    <span class="map-stk">SK海力士 🟢全球第一</span>
+                    <span class="map-stk">三星电子 🟢产能扩张</span>
+                    <span class="map-stk">美光科技 🟢追赶者</span>
+                </div>
+                <div class="map-card-note">💡 HBM是AI算力核心瓶颈，掌握产能=掌握定价权</div>
+            </div>
+
+            <!-- 光模块 -->
+            <div class="map-card">
+                <div class="map-card-hd">
+                    <span class="map-card-cat">AI基础设施</span>
+                    <span class="map-card-signal" style="background:rgba(239,68,68,0.15);color:#f87171">🔥 放量中</span>
+                </div>
+                <div class="map-card-title">800G / 1.6T 光模块</div>
+                <div class="map-card-price">产能紧张 · AI数据中心需求驱动</div>
+                <div class="map-card-stocks">
+                    <span class="map-stk">中际旭创 🟢全球龙头</span>
+                </div>
+                <div class="map-card-note">💡 ROE 36%领跑行业，800G放量+1.6T蓄势</div>
+            </div>
+
+            <!-- PCB -->
+            <div class="map-card">
+                <div class="map-card-hd">
+                    <span class="map-card-cat">AI基础设施</span>
+                    <span class="map-card-signal" style="background:rgba(239,68,68,0.15);color:#f87171">🔥 供应偏紧</span>
+                </div>
+                <div class="map-card-title">高端服务器PCB</div>
+                <div class="map-card-price">43亿扩产 · AI服务器PCB需求旺盛</div>
+                <div class="map-card-stocks">
+                    <span class="map-stk">沪电股份 🟢ROE 25%</span>
+                </div>
+                <div class="map-card-note">💡 高端PCB产能持续扩张，AI硬件升级受益</div>
+            </div>
+
+            <!-- LPDDR5X -->
+            <div class="map-card">
+                <div class="map-card-hd">
+                    <span class="map-card-cat">移动</span>
+                    <span class="map-card-signal" style="background:rgba(100,116,139,0.15);color:#94a3b8">趋稳</span>
+                </div>
+                <div class="map-card-title">LPDDR5X 移动端</div>
+                <div class="map-card-price">$114~$235 · 前期大涨后全线持平</div>
+                <div class="map-card-stocks">
+                    <span class="map-stk">兆易创新 🟢</span>
+                    <span class="map-stk">北京君正 🟢</span>
+                    <span class="map-stk">三星电子 🟢</span>
+                </div>
+                <div class="map-card-note">💡 手机备货期结束，短期趋稳但中期AI终端拉动</div>
+            </div>
+
+            <!-- 消费级SSD -->
+            <div class="map-card">
+                <div class="map-card-hd">
+                    <span class="map-card-cat">消费</span>
+                    <span class="map-card-signal" style="background:rgba(34,197,94,0.15);color:#4ade80">🟢 全线持平</span>
+                </div>
+                <div class="map-card-title">消费级SSD</div>
+                <div class="map-card-price">$38~$250 · 前期跌幅消化完毕</div>
+                <div class="map-card-stocks">
+                    <span class="map-stk hurt">江波龙 🟡需求疲软</span>
+                    <span class="map-stk hurt">佰维存储 🟡需求疲软</span>
+                    <span class="map-stk hurt">德明利 🟡需求疲软</span>
+                </div>
+                <div class="map-card-note">💡 消费级需求疲软，但企业级与消费级价差扩大预示结构转变</div>
+            </div>
+        </div>
+        <div style="text-align:center;margin-top:12px;">
+            <a href="investment.html" class="map-link">📊 查看完整投资分析（PE/PB/研报/估值矩阵）→</a>
         </div>
     </div>
 
