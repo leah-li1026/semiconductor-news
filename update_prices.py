@@ -1,183 +1,264 @@
 #!/usr/bin/env python3
 """
-半导体情报站 - 每周一自动更新价格数据
+半导体情报站 - 每周自动更新价格数据
 数据来源：中国闪存市场 https://www.chinaflashmarket.com/
+
+覆盖品类：DRAM现货、DDR5服务器RDIMM、企业级SSD、消费级SSD、LPDDR5X、NAND Wafer
+更新内容：价格表格、更新日期
 """
 
 import re
 import sys
 import io
 from datetime import datetime
-from urllib.request import urlopen, Request
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-}
+try:
+    import requests
+    from bs4 import BeautifulSoup
+    USE_REQUESTS = True
+except ImportError:
+    from urllib.request import urlopen, Request
+    USE_REQUESTS = False
 
-# 可用的价格页面URL
-PRICE_URLS = {
-    'consumer_ssd': 'https://www.chinaflashmarket.com/price/ssdoem',
-    'lpddr': 'https://www.chinaflashmarket.com/price/lpddr',
+HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 }
 
 
 def fetch_page(url):
+    """抓取网页内容"""
     try:
-        req = Request(url, headers=HEADERS)
-        with urlopen(req, timeout=15) as resp:
-            return resp.read().decode('utf-8', errors='ignore')
+        if USE_REQUESTS:
+            resp = requests.get(url, headers=HEADERS, timeout=20)
+            resp.encoding = 'utf-8'
+            return resp.text
+        else:
+            req = Request(url, headers=HEADERS)
+            with urlopen(req, timeout=20) as resp:
+                return resp.read().decode('utf-8', errors='ignore')
     except Exception as e:
         print(f"  ⚠️ 抓取失败 {url}: {e}")
         return None
 
 
-def parse_price_rows(html):
+def parse_all_prices(html):
     """
-    解析中国闪存市场表格行
-    结构:
-      <th><a>产品名</a></th>
-      <td><span class="new-price [price-up|price-down]"><b>$</b>价格</span></td>
-      <td><span class="[price-up|price-down]">涨跌额</span></td>  或 持平
-      <td><span class="[price-up|price-down]">涨跌幅</span></td>  或 持平
+    解析中国闪存市场首页所有价格表格
+    返回 {产品名: {price, change, change_pct}} 字典
     """
-    prices = []
+    soup = BeautifulSoup(html, 'html.parser')
+    prices = {}
 
-    # 匹配每个 <tr> 行
-    row_pattern = re.compile(r'<tr>(.*?)</tr>', re.DOTALL)
-    for row_match in row_pattern.finditer(html):
-        row_html = row_match.group(1)
+    for table in soup.find_all('table', class_='price-table'):
+        for row in table.find_all('tr'):
+            th = row.find('th', class_='title')
+            if not th:
+                continue
 
-        # 提取产品名
-        name_match = re.search(r'<th[^>]*class="title"[^>]*><a[^>]*>(.*?)</a>', row_html)
-        if not name_match:
-            continue
-        product = name_match.group(1).strip()
+            # 产品名
+            name = th.get_text(strip=True)
 
-        # 提取价格 - <span class="new-price..."><b>$</b>142.00</span>
-        price_match = re.search(r'<span\s+class\s*=\s*"new-price[^"]*"[^>]*><b>\$</b>([\d,.]+)</span>', row_html)
-        if not price_match:
-            continue
-        price = price_match.group(1).strip()
+            # 价格
+            price_span = row.find('span', class_=re.compile(r'new-price'))
+            if price_span:
+                price = price_span.get_text(strip=True).replace('$', '').strip()
+            else:
+                tds = row.find_all('td')
+                if not tds:
+                    continue
+                price = tds[0].get_text(strip=True).replace('$', '').replace(',', '').strip()
 
-        # 提取涨跌幅 - 第三个 <td> 中的百分比
-        td_blocks = re.findall(r'<td>(.*?)</td>', row_html, re.DOTALL)
+            # 涨跌
+            change = '持平'
+            change_pct = '0.00%'
+            tds = row.find_all('td')
+            for td in tds:
+                text = td.get_text(strip=True)
+                pct_match = re.search(r'([+-][\d.]+%)', text)
+                if pct_match:
+                    change_pct = pct_match.group(1)
+                    change = change_pct
+                    break
+                if '涨' in text and '跌' not in text:
+                    change = text
+                elif '跌' in text:
+                    change = text
+                elif '持平' in text or '平稳' in text:
+                    change = '持平'
 
-        change_pct = '持平'
-        for td in td_blocks:
-            pct_match = re.search(r'([+-][\d.]+%)', td)
-            if pct_match:
-                change_pct = pct_match.group(1)
-                break
-            if '持平' in td or '平稳' in td:
-                change_pct = '持平'
-                break
-
-        prices.append({
-            'product': product,
-            'price': price,
-            'change': change_pct
-        })
+            prices[name] = {
+                'price': price,
+                'change': change,
+                'change_pct': change_pct,
+            }
 
     return prices
 
 
-def format_change(change_str):
-    if not change_str or change_str in ('持平', '平稳'):
+def make_change_cell(change_str):
+    """生成涨跌HTML单元格"""
+    if not change_str or change_str in ('持平', '平稳', '0.00%', '0%'):
         return '<td class="price-flat">持平</td>'
-    if change_str.startswith('+'):
+    if change_str.startswith('+') or '涨' in change_str:
         return f'<td class="price-up">{change_str}</td>'
-    if change_str.startswith('-'):
+    if change_str.startswith('-') or '跌' in change_str:
         return f'<td class="price-down">{change_str}</td>'
     return f'<td class="price-flat">{change_str}</td>'
 
 
-def update_html_table(html, card_title_keyword, new_prices, today):
-    """替换指定卡片中的表格数据"""
-    # 定位卡片: 找到包含关键字的 price-card
+def format_price(val_str):
+    """格式化价格显示"""
+    try:
+        val = float(val_str.replace(',', ''))
+        if val >= 1000:
+            return f'${val:,.0f}'
+        elif val >= 1:
+            return f'${val:.2f}'
+        else:
+            return f'${val}'
+    except ValueError:
+        return f'${val_str}'
+
+
+def update_card_table(html, card_keyword, new_data, today):
+    """
+    更新指定卡片中的表格数据
+    card_keyword: 卡片标题中的关键字
+    new_data: [(产品名, 价格, 涨跌), ...] 列表
+    """
+    # 定位卡片
     card_pattern = re.compile(
-        r'(<div class="price-card-title">[^<]*' + re.escape(card_title_keyword) + r'[^<]*</div>.*?<tbody>)(.*?)(</tbody>)',
+        r'(<div class="price-card-title">[^<]*' + re.escape(card_keyword) + r'[^<]*</div>.*?<tbody>)(.*?)(</tbody>)',
         re.DOTALL
     )
 
     match = card_pattern.search(html)
     if not match:
-        print(f"    ⚠️ 未找到包含「{card_title_keyword}」的卡片")
+        print(f"    ⚠️ 未找到「{card_keyword}」卡片")
         return html
 
     rows = '\n'.join(
-        f'                        <tr><td>{p["product"]}</td><td>${p["price"]}</td>{format_change(p["change"])}</tr>'
-        for p in new_prices
+        f'                        <tr><td>{name}</td><td>{format_price(price)}</td>{make_change_cell(change)}</tr>'
+        for name, price, change in new_data
     )
 
     html = html[:match.start()] + match.group(1) + '\n' + rows + '\n                    ' + match.group(3) + html[match.end():]
 
     # 更新日期
     date_pattern = re.compile(
-        r'(<div class="price-card-title">[^<]*' + re.escape(card_title_keyword) + r'[^<]*</div>\s*<div class="price-card-sub">)更新日期：[\d-]+'
+        r'(<div class="price-card-title">[^<]*' + re.escape(card_keyword) + r'[^<]*</div>\s*<div class="price-card-sub">)更新日期：[\d-]+'
     )
     html = date_pattern.sub(r'\1更新日期：' + today, html)
 
+    print(f"    ✅ {card_keyword}: {len(new_data)} 条数据已更新")
     return html
 
 
 def main():
     today = datetime.now().strftime('%Y-%m-%d')
-    print("半导体情报站 - 价格数据更新")
-    print(f"日期: {today}")
+    print("=" * 50)
+    print("🔬 半导体情报站 - 价格数据自动更新")
+    print(f"📅 日期: {today}")
     print("=" * 50)
 
-    all_prices = {}
+    # 1. 抓取数据
+    print("\n📡 正在抓取中国闪存市场数据...")
+    html = fetch_page('https://www.chinaflashmarket.com/')
+    if not html:
+        print("❌ 抓取失败，退出")
+        sys.exit(1)
 
-    print("\n正在抓取价格数据...")
+    prices = parse_all_prices(html)
+    print(f"  ✅ 解析到 {len(prices)} 条价格数据")
 
-    # 消费级SSD
-    print("  -> 消费级SSD...")
-    html = fetch_page(PRICE_URLS['consumer_ssd'])
-    if html:
-        prices = parse_price_rows(html)
-        all_prices['consumer_ssd'] = prices
-        print(f"    获取 {len(prices)} 条数据")
-        for p in prices:
-            print(f"      {p['product']}: ${p['price']} ({p['change']})")
+    if not prices:
+        print("❌ 无数据，退出")
+        sys.exit(1)
 
-    # LPDDR
-    print("  -> LPDDR...")
-    html = fetch_page(PRICE_URLS['lpddr'])
-    if html:
-        prices = parse_price_rows(html)
-        all_prices['lpddr'] = prices
-        print(f"    获取 {len(prices)} 条数据")
-        for p in prices:
-            print(f"      {p['product']}: ${p['price']} ({p['change']})")
+    # 打印抓取到的数据
+    print("\n📊 抓取到的价格数据:")
+    for name, info in prices.items():
+        print(f"  {name}: ${info['price']} ({info['change']})")
 
-    total = sum(len(v) for v in all_prices.values())
-    if total == 0:
-        print("\n未抓取到任何价格数据，跳过更新")
-        sys.exit(0)
-
-    print(f"\n共获取 {total} 条价格数据")
-
-    # 读取并更新HTML
+    # 2. 读取HTML
     filepath = 'index.html'
-    print(f"\n正在更新 {filepath}...")
-
+    print(f"\n📝 正在更新 {filepath}...")
     with open(filepath, 'r', encoding='utf-8') as f:
         html_content = f.read()
 
-    # 更新消费级SSD
-    if 'consumer_ssd' in all_prices and all_prices['consumer_ssd']:
-        html_content = update_html_table(html_content, '消费级SSD', all_prices['consumer_ssd'], today)
+    # 3. 更新各品类价格表
 
-    # 更新LPDDR
-    if 'lpddr' in all_prices and all_prices['lpddr']:
-        html_content = update_html_table(html_content, 'LPDDR5X', all_prices['lpddr'], today)
+    # DRAM 现货价
+    dram_items = []
+    for name in ['DDR4 16Gb 3200', 'DDR4 8Gb 3200', 'DDR5 24Gb Major', 'DDR5 16Gb Major', 'DDR5 16Gb eTT']:
+        if name in prices:
+            p = prices[name]
+            dram_items.append((name, p['price'], p['change']))
+    if dram_items:
+        html_content = update_card_table(html_content, 'DRAM 现货价格', dram_items, today)
 
+    # DDR5 服务器合约价
+    rdimm_items = []
+    for name in ['DDR5 RDIMM 32GB', 'DDR5 RDIMM 64GB', 'DDR5 RDIMM 96GB']:
+        if name in prices:
+            p = prices[name]
+            rdimm_items.append((name, p['price'], p['change']))
+    if rdimm_items:
+        html_content = update_card_table(html_content, 'DDR5 服务器合约价', rdimm_items, today)
+
+    # 企业级SSD (行业市场，HTML中用短名称)
+    essd_map = {
+        'PCIe 3.0 256GB': 'SSD(PCIe 3.0) 256GB',
+        'PCIe 3.0 512GB': 'SSD(PCIe 3.0) 512GB',
+        'PCIe 3.0 1TB': 'SSD(PCIe 3.0) 1TB',
+        'PCIe 4.0 512GB': 'SSD(PCIe 4.0) 512GB',
+        'PCIe 4.0 1TB': 'SSD(PCIe 4.0) 1TB',
+        'PCIe 4.0 2TB': 'SSD(PCIe 4.0) 2TB',
+    }
+    essd_items = []
+    for html_name, cfm_name in essd_map.items():
+        if cfm_name in prices:
+            p = prices[cfm_name]
+            essd_items.append((html_name, p['price'], p['change']))
+    if essd_items:
+        html_content = update_card_table(html_content, '企业级SSD价格', essd_items, today)
+
+    # 消费级SSD
+    cssd_items = []
+    for name in ['SSD(PCIe 3.0) 256GB', 'SSD(PCIe 3.0) 512GB', 'SSD(PCIe 3.0) 1TB',
+                 'SSD(PCIe 4.0) 512GB', 'SSD(PCIe 4.0) 1TB', 'SSD(PCIe 4.0) 2TB']:
+        if name in prices:
+            p = prices[name]
+            cssd_items.append((name, p['price'], p['change']))
+    if cssd_items:
+        html_content = update_card_table(html_content, '消费级SSD价格', cssd_items, today)
+
+    # LPDDR5X
+    lpddr_items = []
+    for name in ['LPDDR5X 128Gb', 'LPDDR5X 96Gb', 'LPDDR5X 64Gb']:
+        if name in prices:
+            p = prices[name]
+            lpddr_items.append((name, p['price'], p['change']))
+    if lpddr_items:
+        html_content = update_card_table(html_content, 'LPDDR5X 移动端价格', lpddr_items, today)
+
+    # NAND Wafer
+    nand_items = []
+    for name in ['1Tb QLC', '1Tb TLC', '512Gb TLC', '256Gb TLC']:
+        if name in prices:
+            p = prices[name]
+            nand_items.append((name, p['price'], p['change']))
+    if nand_items:
+        html_content = update_card_table(html_content, 'NAND Flash Wafer 价格', nand_items, today)
+
+    # 4. 保存
     with open(filepath, 'w', encoding='utf-8') as f:
         f.write(html_content)
 
-    print(f"\n更新完成 ({today})")
+    total = len(dram_items) + len(rdimm_items) + len(essd_items) + len(cssd_items) + len(lpddr_items) + len(nand_items)
+    print(f"\n🎉 更新完成！共更新 {total} 条价格数据 ({today})")
 
 
 if __name__ == '__main__':
