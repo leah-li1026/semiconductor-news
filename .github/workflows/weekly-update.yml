@@ -21,6 +21,9 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: 安装依赖
+        run: pip install requests beautifulsoup4
+
       - name: 运行价格更新脚本
         run: python update_prices.py
 
@@ -41,6 +44,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add index.html
+          git add index.html update_prices.py
           git commit -m "chore: 每周自动更新价格数据 $(date +%Y-%m-%d)"
           git push
