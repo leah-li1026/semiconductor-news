@@ -1351,7 +1351,7 @@ function init() {
     loadNews();
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', function() { init(); });
 
 // ===== 阻容感历史追踪 =====
 let passiveHistoryData = null;
