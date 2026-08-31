@@ -22,7 +22,8 @@ jobs:
           python-version: '3.11'
 
       - name: 安装依赖
-        run: pip install requests beautifulsoup4
+        run: |
+          pip install requests beautifulsoup4 selenium
 
       - name: 更新存储芯片价格
         run: python update_prices.py
@@ -35,10 +36,10 @@ jobs:
         run: |
           if git diff --quiet; then
             echo "changed=false" >> $GITHUB_OUTPUT
-            echo "📭 本周价格无变化"
+            echo "No price changes this week"
           else
             echo "changed=true" >> $GITHUB_OUTPUT
-            echo "📬 价格数据已更新"
+            echo "Prices updated"
             git diff --stat
           fi
 
