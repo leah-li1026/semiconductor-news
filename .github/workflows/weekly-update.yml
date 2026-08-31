@@ -24,8 +24,11 @@ jobs:
       - name: 安装依赖
         run: pip install requests beautifulsoup4
 
-      - name: 运行价格更新脚本
+      - name: 更新存储芯片价格
         run: python update_prices.py
+
+      - name: 更新阻容感/PCB 价格
+        run: python update_passive.py
 
       - name: 检查是否有变更
         id: changes
@@ -44,6 +47,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add index.html update_prices.py
+          git add index.html update_prices.py update_passive.py passive_history.json
           git commit -m "chore: 每周自动更新价格数据 $(date +%Y-%m-%d)"
           git push

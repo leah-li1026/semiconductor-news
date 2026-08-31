@@ -168,6 +168,71 @@
 
         .chart-container { position: relative; height: 200px; margin-top: 14px; }
 
+        /* Passive detail button */
+        .detail-btn {
+            font-size: 11px; color: #60a5fa; background: rgba(59,130,246,0.08);
+            border: 1px solid rgba(59,130,246,0.2); border-radius: 6px;
+            padding: 4px 10px; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+        }
+        .detail-btn:hover { background: rgba(59,130,246,0.15); color: #93c5fd; }
+
+        /* Passive trend summary */
+        .trend-summary {
+            display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px;
+        }
+        .trend-tag {
+            font-size: 10px; padding: 2px 8px; border-radius: 5px;
+            background: rgba(255,255,255,0.04); color: #94a3b8; border: 1px solid #1e293b;
+        }
+        .trend-tag.up { background: rgba(239,68,68,0.1); color: #f87171; border-color: rgba(239,68,68,0.2); }
+        .trend-tag.down { background: rgba(74,222,128,0.1); color: #4ade80; border-color: rgba(74,222,128,0.2); }
+        .trend-tag.flat { background: rgba(100,116,139,0.1); color: #94a3b8; border-color: rgba(100,116,139,0.2); }
+
+        /* Detail modal */
+        .detail-modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7); z-index: 1000; backdrop-filter: blur(4px);
+            justify-content: center; align-items: center; padding: 20px;
+        }
+        .detail-modal-overlay.show { display: flex; }
+        .detail-modal {
+            background: #111827; border: 1px solid #2a3158; border-radius: 16px;
+            max-width: 900px; width: 100%; max-height: 85vh; overflow-y: auto;
+            padding: 24px; position: relative;
+        }
+        .detail-modal::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #f472b6); border-radius: 16px 16px 0 0;
+        }
+        .detail-modal-title {
+            font-size: 18px; font-weight: 700; margin-bottom: 16px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .detail-modal-close {
+            background: #1e293b; border: 1px solid #334155; color: #94a3b8;
+            width: 32px; height: 32px; border-radius: 8px; cursor: pointer;
+            font-size: 16px; display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .detail-modal-close:hover { background: #334155; color: #e2e8f0; }
+        .detail-table {
+            width: 100%; border-collapse: collapse; margin-top: 12px;
+        }
+        .detail-table th {
+            text-align: left; font-size: 11px; color: #64748b; font-weight: 500;
+            padding: 8px 10px; border-bottom: 1px solid #1e293b; white-space: nowrap;
+        }
+        .detail-table td {
+            padding: 8px 10px; font-size: 12px; color: #cbd5e1;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        .detail-table tr:hover { background: rgba(255,255,255,0.02); }
+        .detail-table .week-col { font-weight: 600; color: #94a3b8; }
+        .detail-table .change-up { color: #f87171; font-weight: 600; }
+        .detail-table .change-down { color: #4ade80; font-weight: 600; }
+        .detail-table .change-flat { color: #64748b; }
+        .detail-chart-area { position: relative; height: 250px; margin: 16px 0; }
+
         /* Manual update notice */
         .manual-notice {
             display: flex; align-items: center; gap: 6px;
@@ -528,7 +593,8 @@
         <div class="section-header" style="margin-top: 8px;">
             <span class="section-icon">🔧</span>
             <span class="section-title">阻容感 / PCB 价格行情</span>
-            <span class="section-badge">手动更新</span>
+            <span class="section-badge" id="passive-update-badge">手动更新</span>
+            <div class="trend-summary" id="passive-trend-summary"></div>
             <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;">
                 <a href="https://www.szlcsc.com/search?keyword=MLCC" target="_blank" style="font-size:11px;color:#60a5fa;text-decoration:none;padding:3px 8px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.15);border-radius:6px;">立创商城 MLCC →</a>
                 <a href="https://www.hqchip.com/search?keyword=MLCC" target="_blank" style="font-size:11px;color:#60a5fa;text-decoration:none;padding:3px 8px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.15);border-radius:6px;">华秋商城 →</a>
@@ -541,18 +607,20 @@
                 <div class="price-card-header">
                     <div>
                         <div class="price-card-title">⚡ MLCC 贴片电容</div>
-                        <div class="price-card-sub">更新日期：2026-08-13</div>
+                        <div class="price-card-sub" id="passive-date-MLCC">更新日期：2026-08-31</div>
                     </div>
+                    <button class="detail-btn" onclick="showPassiveDetail('MLCC')">📊 详情</button>
                 </div>
                 <table class="price-table">
                     <thead><tr><th>型号规格</th><th>参考价</th><th>趋势</th></tr></thead>
                     <tbody>
-                        <tr><td>0201 100nF X5R 16V</td><td>¥0.008/颗</td><td class="price-flat">平稳</td></tr>
-                        <tr><td>0402 1uF X5R 10V</td><td>¥0.015/颗</td><td class="price-flat">平稳</td></tr>
-                        <tr><td>0603 10uF X5R 10V</td><td>¥0.05/颗</td><td class="price-up">微涨</td></tr>
-                        <tr><td>0805 22uF X5R 6.3V</td><td>¥0.12/颗</td><td class="price-flat">平稳</td></tr>
+                        <tr><td>0201 100nF X5R 16V</td><td>¥0.008/颗</td><td class="price-flat">数据待更新</td></tr>
+                        <tr><td>0402 1uF X5R 10V</td><td>¥0.015/颗</td><td class="price-flat">数据待更新</td></tr>
+                        <tr><td>0603 10uF X5R 10V</td><td>¥0.05/颗</td><td class="price-flat">数据待更新</td></tr>
+                        <tr><td>0805 22uF X5R 6.3V</td><td>¥0.12/颗</td><td class="price-flat">数据待更新</td></tr>
                     </tbody>
                 </table>
+                <div class="chart-container"><canvas id="passiveChart_MLCC"></canvas></div>
                 <div class="manual-notice">📝 数据来源：<a href="https://www.szlcsc.com/" target="_blank" style="color:#60a5fa;text-decoration:none;">立创商城</a> / <a href="https://www.hqchip.com/" target="_blank" style="color:#60a5fa;text-decoration:none;">华秋商城</a> · 批量价仅供参考，需定期手动更新</div>
             </div>
 
@@ -560,17 +628,19 @@
                 <div class="price-card-header">
                     <div>
                         <div class="price-card-title">🔌 贴片电阻</div>
-                        <div class="price-card-sub">更新日期：2026-08-13</div>
+                        <div class="price-card-sub" id="passive-date-电阻">更新日期：2026-08-31</div>
                     </div>
+                    <button class="detail-btn" onclick="showPassiveDetail('电阻')">📊 详情</button>
                 </div>
                 <table class="price-table">
                     <thead><tr><th>型号规格</th><th>参考价</th><th>趋势</th></tr></thead>
                     <tbody>
-                        <tr><td>0402 10KΩ ±1%</td><td>¥0.002/颗</td><td class="price-flat">平稳</td></tr>
-                        <tr><td>0603 100Ω ±1%</td><td>¥0.003/颗</td><td class="price-flat">平稳</td></tr>
-                        <tr><td>0805 4.7KΩ ±1%</td><td>¥0.004/颗</td><td class="price-flat">平稳</td></tr>
+                        <tr><td>0402 10KΩ ±1%</td><td>¥0.002/颗</td><td class="price-flat">数据待更新</td></tr>
+                        <tr><td>0603 100Ω ±1%</td><td>¥0.003/颗</td><td class="price-flat">数据待更新</td></tr>
+                        <tr><td>0805 4.7KΩ ±1%</td><td>¥0.004/颗</td><td class="price-flat">数据待更新</td></tr>
                     </tbody>
                 </table>
+                <div class="chart-container"><canvas id="passiveChart_电阻"></canvas></div>
                 <div class="manual-notice">📝 数据来源：<a href="https://www.szlcsc.com/" target="_blank" style="color:#60a5fa;text-decoration:none;">立创商城</a> / <a href="https://www.hqchip.com/" target="_blank" style="color:#60a5fa;text-decoration:none;">华秋商城</a> · 批量价仅供参考，需定期手动更新</div>
             </div>
 
@@ -578,17 +648,19 @@
                 <div class="price-card-header">
                     <div>
                         <div class="price-card-title">🧲 贴片电感</div>
-                        <div class="price-card-sub">更新日期：2026-08-13</div>
+                        <div class="price-card-sub" id="passive-date-电感">更新日期：2026-08-31</div>
                     </div>
+                    <button class="detail-btn" onclick="showPassiveDetail('电感')">📊 详情</button>
                 </div>
                 <table class="price-table">
                     <thead><tr><th>型号规格</th><th>参考价</th><th>趋势</th></tr></thead>
                     <tbody>
-                        <tr><td>0402 1uH ±5%</td><td>¥0.02/颗</td><td class="price-flat">平稳</td></tr>
-                        <tr><td>0603 4.7uH ±5%</td><td>¥0.04/颗</td><td class="price-flat">平稳</td></tr>
-                        <tr><td>功率电感 10uH 3A</td><td>¥0.35/颗</td><td class="price-up">微涨</td></tr>
+                        <tr><td>0402 1uH ±5%</td><td>¥0.02/颗</td><td class="price-flat">数据待更新</td></tr>
+                        <tr><td>0603 4.7uH ±5%</td><td>¥0.04/颗</td><td class="price-flat">数据待更新</td></tr>
+                        <tr><td>功率电感 10uH 3A</td><td>¥0.35/颗</td><td class="price-flat">数据待更新</td></tr>
                     </tbody>
                 </table>
+                <div class="chart-container"><canvas id="passiveChart_电感"></canvas></div>
                 <div class="manual-notice">📝 数据来源：<a href="https://www.szlcsc.com/" target="_blank" style="color:#60a5fa;text-decoration:none;">立创商城</a> / <a href="https://www.sekorm.com/" target="_blank" style="color:#60a5fa;text-decoration:none;">世强硬创</a> · 批量价仅供参考，需定期手动更新</div>
             </div>
 
@@ -596,16 +668,17 @@
                 <div class="price-card-header">
                     <div>
                         <div class="price-card-title">📋 PCB 板材/覆铜板</div>
-                        <div class="price-card-sub">更新日期：2026-08-13</div>
+                        <div class="price-card-sub" id="passive-date-PCB">更新日期：2026-08-31</div>
                     </div>
+                    <button class="detail-btn" onclick="showPassiveDetail('PCB')">📊 详情</button>
                 </div>
                 <table class="price-table">
                     <thead><tr><th>类型</th><th>参考价</th><th>趋势</th></tr></thead>
                     <tbody>
                         <tr><td>FR-4 双面板 (1.6mm)</td><td>¥180/㎡</td><td class="price-flat">平稳</td></tr>
                         <tr><td>FR-4 四层板</td><td>¥350/㎡</td><td class="price-flat">平稳</td></tr>
-                        <tr><td>HDI板</td><td>¥600-1200/㎡</td><td class="price-up">微涨</td></tr>
-                        <tr><td>高频板 (Rogers)</td><td>¥1500+/㎡</td><td class="price-up">供应偏紧</td></tr>
+                        <tr><td>HDI板</td><td>¥900/㎡</td><td class="price-flat">平稳</td></tr>
+                        <tr><td>高频板 (Rogers)</td><td>¥1,500/㎡</td><td class="price-flat">平稳</td></tr>
                     </tbody>
                 </table>
                 <div class="manual-notice">📝 数据来源：<a href="https://www.sekorm.com/" target="_blank" style="color:#60a5fa;text-decoration:none;">世强硬创</a> / <a href="https://www.trendforce.com/" target="_blank" style="color:#60a5fa;text-decoration:none;">TrendForce</a> · 行业参考价，需定期手动更新</div>
@@ -1102,6 +1175,73 @@ function initCharts() {
     });
 }
 
+
+    
+
+
+    // ===== 阻容感趋势图 =====
+
+    (function() {
+        var canvas = document.getElementById('passiveChart_MLCC');
+        if (!canvas) return;
+        new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: ["08-13", "08-31"],
+                datasets: [{"label": "0201", "data": [0.008, 0.008], "borderColor": "#3b82f6", "backgroundColor": "#3b82f61a", "fill": true, "tension": 0.4, "pointRadius": 3}, {"label": "0402", "data": [0.015, 0.015], "borderColor": "#8b5cf6", "backgroundColor": "#8b5cf61a", "fill": true, "tension": 0.4, "pointRadius": 3}, {"label": "0603", "data": [0.05, 0.05], "borderColor": "#f472b6", "backgroundColor": "#f472b61a", "fill": true, "tension": 0.4, "pointRadius": 3}, {"label": "0805", "data": [0.12, 0.12], "borderColor": "#fb923c", "backgroundColor": "#fb923c1a", "fill": true, "tension": 0.4, "pointRadius": 3}]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'top', labels: { boxWidth: 10, padding: 8, font: { size: 10 } } } },
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.03)' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    })();
+
+    (function() {
+        var canvas = document.getElementById('passiveChart_电阻');
+        if (!canvas) return;
+        new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: ["08-13", "08-31"],
+                datasets: [{"label": "0402", "data": [0.002, 0.002], "borderColor": "#3b82f6", "backgroundColor": "#3b82f61a", "fill": true, "tension": 0.4, "pointRadius": 3}, {"label": "0603", "data": [0.003, 0.003], "borderColor": "#8b5cf6", "backgroundColor": "#8b5cf61a", "fill": true, "tension": 0.4, "pointRadius": 3}, {"label": "0805", "data": [0.004, 0.004], "borderColor": "#f472b6", "backgroundColor": "#f472b61a", "fill": true, "tension": 0.4, "pointRadius": 3}]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'top', labels: { boxWidth: 10, padding: 8, font: { size: 10 } } } },
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.03)' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    })();
+
+    (function() {
+        var canvas = document.getElementById('passiveChart_电感');
+        if (!canvas) return;
+        new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: ["08-13", "08-31"],
+                datasets: [{"label": "0402", "data": [0.02, 0.02], "borderColor": "#3b82f6", "backgroundColor": "#3b82f61a", "fill": true, "tension": 0.4, "pointRadius": 3}, {"label": "0603", "data": [0.04, 0.04], "borderColor": "#8b5cf6", "backgroundColor": "#8b5cf61a", "fill": true, "tension": 0.4, "pointRadius": 3}, {"label": "功率电感", "data": [0.35, 0.35], "borderColor": "#f472b6", "backgroundColor": "#f472b61a", "fill": true, "tension": 0.4, "pointRadius": 3}]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'top', labels: { boxWidth: 10, padding: 8, font: { size: 10 } } } },
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.03)' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    })();
+    // ===== /阻容感趋势图 =====
+
 // ===== News =====
 const RSS2JSON_API = 'https://api.rss2json.com/v1/api.json?rss_url=';
 const RSS_SOURCES = [
@@ -1212,6 +1352,216 @@ function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+// ===== 阻容感历史追踪 =====
+let passiveHistoryData = null;
+
+async function loadPassiveHistory() {
+    try {
+        const resp = await fetch('passive_history.json?' + Date.now());
+        if (!resp.ok) return;
+        passiveHistoryData = await resp.json();
+        renderPassiveTrendSummary();
+        renderPassiveCharts();
+        updatePassiveDates();
+    } catch (e) {
+        console.log('passive_history.json 加载失败:', e);
+    }
+}
+
+function updatePassiveDates() {
+    if (!passiveHistoryData) return;
+    const lastUpdate = passiveHistoryData.last_update;
+    document.querySelectorAll('[id^="passive-date-"]').forEach(el => {
+        el.textContent = '更新日期：' + lastUpdate;
+    });
+    const badge = document.getElementById('passive-update-badge');
+    if (badge) badge.textContent = '自动追踪 · ' + lastUpdate;
+}
+
+function renderPassiveTrendSummary() {
+    if (!passiveHistoryData) return;
+    const container = document.getElementById('passive-trend-summary');
+    if (!container) return;
+    container.innerHTML = '';
+    for (const [catName, catData] of Object.entries(passiveHistoryData.categories || {})) {
+        const items = catData.items || {};
+        let hasUp = false, hasDown = false;
+        for (const item of Object.values(items)) {
+            const hist = item.history || [];
+            if (hist.length >= 2) {
+                const latest = hist[hist.length - 1].price;
+                const prev = hist[hist.length - 2].price;
+                if (latest > prev) hasUp = true;
+                else if (latest < prev) hasDown = true;
+            }
+        }
+        let cls = 'flat', icon = '→';
+        if (hasUp) { cls = 'up'; icon = '↑'; }
+        if (hasDown) { cls = 'down'; icon = '↓'; }
+        container.innerHTML += `<span class="trend-tag ${cls}">${catName} ${icon}</span>`;
+    }
+}
+
+function renderPassiveCharts() {
+    if (!passiveHistoryData) return;
+    for (const [catName, catData] of Object.entries(passiveHistoryData.categories || {})) {
+        if (catName === 'PCB') continue; // PCB 价格跨度大，不画趋势图
+        const canvasId = 'passiveChart_' + catName;
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) continue;
+        const items = catData.items || {};
+        const allDates = new Set();
+        for (const item of Object.values(items)) {
+            for (const h of (item.history || [])) allDates.add(h.date);
+        }
+        const dates = [...allDates].sort();
+        if (dates.length < 2) continue; // 只有一个数据点不画图
+        const labels = dates.map(d => d.substring(5));
+        const colors = ['#3b82f6', '#8b5cf6', '#f472b6', '#fb923c', '#4ade80'];
+        const datasets = [];
+        let i = 0;
+        for (const [itemName, itemData] of Object.entries(items)) {
+            const priceMap = {};
+            for (const h of (itemData.history || [])) priceMap[h.date] = h.price;
+            datasets.push({
+                label: itemName.split(' ')[0],
+                data: dates.map(d => priceMap[d] ?? null),
+                borderColor: colors[i % colors.length],
+                backgroundColor: colors[i % colors.length] + '1a',
+                fill: true, tension: 0.4, pointRadius: 3
+            });
+            i++;
+        }
+        new Chart(canvas, {
+            type: 'line',
+            data: { labels, datasets },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'top', labels: { boxWidth: 10, padding: 8, font: { size: 10 } } } },
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.03)' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+}
+
+function showPassiveDetail(catName) {
+    if (!passiveHistoryData) { alert('历史数据加载中，请稍后重试'); return; }
+    const catData = (passiveHistoryData.categories || {})[catName];
+    if (!catData) { alert('暂无「' + catName + '」的历史数据'); return; }
+    const items = catData.items || {};
+    const allDates = new Set();
+    for (const item of Object.values(items)) {
+        for (const h of (item.history || [])) allDates.add(h.date);
+    }
+    const dates = [...allDates].sort();
+
+    // 构建弹窗内容
+    let tableHtml = '<table class="detail-table"><thead><tr><th>日期</th>';
+    for (const itemName of Object.keys(items)) {
+        tableHtml += '<th>' + itemName + '</th>';
+    }
+    tableHtml += '</tr></thead><tbody>';
+
+    for (let di = 0; di < dates.length; di++) {
+        const d = dates[di];
+        tableHtml += '<tr><td class="week-col">' + d + '</td>';
+        for (const itemData of Object.values(items)) {
+            const hist = itemData.history || [];
+            const entry = hist.find(h => h.date === d);
+            if (entry) {
+                let changeHtml = '';
+                if (di > 0) {
+                    const prevEntry = hist.find(h => h.date === dates[di - 1]);
+                    if (prevEntry) {
+                        const pct = ((entry.price - prevEntry.price) / prevEntry.price * 100);
+                        if (Math.abs(pct) >= 0.5) {
+                            const cls = pct > 0 ? 'change-up' : 'change-down';
+                            changeHtml = `<br><span class="${cls}" style="font-size:10px">${pct > 0 ? '+' : ''}${pct.toFixed(1)}%</span>`;
+                        }
+                    }
+                }
+                const priceStr = entry.price >= 1 ? '¥' + entry.price.toFixed(2) : '¥' + entry.price;
+                tableHtml += '<td>' + priceStr + changeHtml + '</td>';
+            } else {
+                tableHtml += '<td style="color:#334155">-</td>';
+            }
+        }
+        tableHtml += '</tr>';
+    }
+    tableHtml += '</tbody></table>';
+
+    // 趋势图
+    const chartId = 'detailChart_' + catName;
+    const chartHtml = catName !== 'PCB' && dates.length >= 2
+        ? `<div class="detail-chart-area"><canvas id="${chartId}"></canvas></div>`
+        : '';
+
+    const label = catData.label || catName;
+    document.getElementById('detailModalTitle').innerHTML = label + ' · 价格走势详情';
+    document.getElementById('detailModalBody').innerHTML = chartHtml + tableHtml;
+    document.getElementById('detailModal').classList.add('show');
+
+    // 渲染弹窗内的图表
+    if (catName !== 'PCB' && dates.length >= 2) {
+        const canvas = document.getElementById(chartId);
+        if (canvas) {
+            const labels = dates.map(d => d.substring(5));
+            const colors = ['#3b82f6', '#8b5cf6', '#f472b6', '#fb923c', '#4ade80'];
+            const datasets = [];
+            let i = 0;
+            for (const [itemName, itemData] of Object.entries(items)) {
+                const priceMap = {};
+                for (const h of (itemData.history || [])) priceMap[h.date] = h.price;
+                datasets.push({
+                    label: itemName,
+                    data: dates.map(d => priceMap[d] ?? null),
+                    borderColor: colors[i % colors.length],
+                    backgroundColor: colors[i % colors.length] + '1a',
+                    fill: true, tension: 0.4, pointRadius: 4
+                });
+                i++;
+            }
+            new Chart(canvas, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } } },
+                    scales: {
+                        y: { grid: { color: 'rgba(255,255,255,0.03)' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+    }
+}
+
+function closePassiveDetail() {
+    document.getElementById('detailModal').classList.remove('show');
+}
+
+// 在 init 中加载被动元件历史
+const origInit = init;
+init = function() {
+    origInit();
+    loadPassiveHistory();
+};
 </script>
+
+<!-- 阻容感详情弹窗 -->
+<div class="detail-modal-overlay" id="detailModal" onclick="if(event.target===this)closePassiveDetail()">
+    <div class="detail-modal">
+        <div class="detail-modal-title">
+            <span id="detailModalTitle">价格走势详情</span>
+            <button class="detail-modal-close" onclick="closePassiveDetail()">✕</button>
+        </div>
+        <div id="detailModalBody"></div>
+    </div>
+</div>
 </body>
 </html>
