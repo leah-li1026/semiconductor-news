@@ -1,14 +1,8 @@
 #!/usr/bin/env python3
 """
-阻容感/PCB 常用物料价格追踪
+阻容感/PCB 常用物料价格追踪（按品牌）
 数据来源：立创商城 (szlcsc.com) via Selenium
-功能：抓取价格 -> 追加历史记录 -> 更新 index.html
-
-物料清单（按市场常用度从高到低）：
-- MLCC: 0402 1uF > 0201 100nF > 0603 10uF > 0805 22uF
-- 电阻: 0402 10K > 0603 100R > 0805 4.7K
-- 电感: 0402 1uH > 0603 4.7uH > 功率电感 10uH 3A
-- PCB: FR-4 双面/四层, HDI, 高频板 (手动维护)
+功能：按品牌抓取价格 -> 追加历史记录 -> 更新 index.html
 """
 
 import json
@@ -32,44 +26,6 @@ SCRIPT_DIR = Path(__file__).parent
 HISTORY_FILE = SCRIPT_DIR / 'passive_history.json'
 HTML_FILE = SCRIPT_DIR / 'index.html'
 
-# ===== 追踪物料定义（按市场常用度从高到低排序）=====
-TRACK_ITEMS = {
-    "MLCC": {
-        "label": "⚡ MLCC 贴片电容",
-        "items": [
-            ("0402 1uF X5R 10V", {"keyword": "0402 1uF X5R 10V", "unit": "¥/颗"}),
-            ("0201 100nF X5R 16V", {"keyword": "0201 100nF X5R 16V", "unit": "¥/颗"}),
-            ("0603 10uF X5R 10V", {"keyword": "0603 10uF X5R 10V", "unit": "¥/颗"}),
-            ("0805 22uF X5R 6.3V", {"keyword": "0805 22uF X5R", "unit": "¥/颗"}),
-        ]
-    },
-    "电阻": {
-        "label": "🔌 贴片电阻",
-        "items": [
-            ("0402 10KΩ ±1%", {"keyword": "0402 10K 0402", "unit": "¥/颗"}),
-            ("0603 100Ω ±1%", {"keyword": "0603 100R 0603", "unit": "¥/颗"}),
-            ("0805 4.7KΩ ±1%", {"keyword": "0805 4.7K", "unit": "¥/颗"}),
-        ]
-    },
-    "电感": {
-        "label": "🧲 贴片电感",
-        "items": [
-            ("0402 1uH ±5%", {"keyword": "0402 1UH", "unit": "¥/颗"}),
-            ("0603 4.7uH ±5%", {"keyword": "0603 4.7UH", "unit": "¥/颗"}),
-            ("功率电感 10uH 3A", {"keyword": "SMD 10uH 3A", "unit": "¥/颗"}),
-        ]
-    },
-    "PCB": {
-        "label": "📋 PCB 板材/覆铜板",
-        "items": [
-            ("FR-4 双面板 (1.6mm)", {"keyword": None, "unit": "¥/㎡", "manual": True}),
-            ("FR-4 四层板", {"keyword": None, "unit": "¥/㎡", "manual": True}),
-            ("HDI板", {"keyword": None, "unit": "¥/㎡", "manual": True}),
-            ("高频板 (Rogers)", {"keyword": None, "unit": "¥/㎡", "manual": True}),
-        ]
-    }
-}
-
 
 def load_history():
     if HISTORY_FILE.exists():
@@ -81,189 +37,179 @@ def load_history():
 def save_history(data):
     with open(HISTORY_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
-    print(f"  [OK] History saved")
+    print("  [OK] History saved")
 
 
-def get_last_price(history, category, item_name):
-    cat = history.get("categories", {}).get(category, {})
-    item = cat.get("items", {}).get(item_name, {})
-    hist = item.get("history", [])
-    return hist[-1]["price"] if hist else None
+def scrape_lcsc(driver, keyword):
+    """搜索立创商城，返回价格"""
+    import time
+    driver.get(f'https://so.szlcsc.com/global.html?k={keyword}')
+    time.sleep(6)
+
+    page = driver.page_source
+    if '完成验证' in page or '安全验证' in page:
+        return None, None, 'CAPTCHA'
+
+    links = re.findall(r'item\.szlcsc\.com/(\d+)\.html', page)
+    if not links:
+        return None, None, 'no_results'
+
+    pid = links[0]
+    driver.get(f'https://item.szlcsc.com/{pid}.html')
+    time.sleep(4)
+
+    page = driver.page_source
+    prices = re.findall(r'"price"\s*:\s*"?(\d+\.?\d*)"?', page)
+    brand = re.search(r'"brand"[^}]*"name"\s*:\s*"([^"]+)"', page)
+
+    if prices:
+        return float(prices[0]), brand.group(1) if brand else None, None
+    return None, None, 'no_price'
 
 
-def determine_trend(current, previous):
-    if previous is None or previous == 0:
-        return "新增"
-    pct = (current - previous) / previous * 100
-    if abs(pct) < 1:
-        return "平稳"
-    elif pct >= 5:
-        return f"上涨 +{pct:.1f}%"
-    elif pct >= 1:
-        return f"微涨 +{pct:.1f}%"
-    elif pct <= -5:
-        return f"下跌 {pct:.1f}%"
-    elif pct <= -1:
-        return f"微跌 {pct:.1f}%"
-    return "平稳"
+def scrape_all(history):
+    """按品牌抓取所有物料"""
+    if not HAS_SELENIUM:
+        print("  [WARN] Selenium not installed")
+        return {}
 
-
-def scrape_with_selenium(keyword):
-    """用 Selenium 搜索立创商城并提取价格"""
     options = Options()
     options.add_argument('--headless=new')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--disable-gpu')
 
     driver = webdriver.Chrome(options=options)
-    try:
-        # 搜索
-        driver.get(f'https://so.szlcsc.com/global.html?k={keyword}')
-        import time
-        time.sleep(8)
-
-        page = driver.page_source
-        if '完成验证' in page or '安全验证' in page:
-            print(f"    CAPTCHA detected for {keyword}")
-            return None
-
-        # 提取产品ID
-        links = re.findall(r'item\.szlcsc\.com/(\d+)\.html', page)
-        if not links:
-            print(f"    No product found for {keyword}")
-            return None
-
-        pid = links[0]
-        # 访问详情页
-        driver.get(f'https://item.szlcsc.com/{pid}.html')
-        time.sleep(5)
-
-        page = driver.page_source
-        prices = re.findall(r'"price"\s*:\s*"?(\d+\.?\d*)"?', page)
-        stock = re.findall(r'"value"\s*:\s*(\d+)', page)
-
-        if prices:
-            price = float(prices[0])
-            stock_qty = int(stock[0]) if stock else 0
-            return {'price': price, 'stock': stock_qty, 'pid': pid}
-        return None
-    finally:
-        driver.quit()
-
-
-def scrape_prices(history):
-    """抓取所有物料价格"""
-    today = datetime.now().strftime('%Y-%m-%d')
     results = {}
     scraped = 0
 
-    if not HAS_SELENIUM:
-        print("  [WARN] Selenium not installed, using fallback prices")
-        # Fallback: 保留上次价格
-        for cat_name, cat_info in TRACK_ITEMS.items():
-            results[cat_name] = {"label": cat_info["label"], "items": {}}
-            for item_name, item_info in cat_info["items"]:
-                last = get_last_price(history, cat_name, item_name)
-                if last is not None:
-                    results[cat_name]["items"][item_name] = {
-                        "price": last, "trend": "平稳", "unit": item_info["unit"], "source": "fallback"
-                    }
-        return results, 0
-
-    print(f"\n  Scraping from LCSC via Selenium...")
-
-    for cat_name, cat_info in TRACK_ITEMS.items():
-        results[cat_name] = {"label": cat_info["label"], "items": {}}
-        print(f"\n  [{cat_name}]")
-
-        for item_name, item_info in cat_info["items"]:
-            if item_info.get("manual"):
-                last = get_last_price(history, cat_name, item_name)
-                if last is not None:
-                    results[cat_name]["items"][item_name] = {
-                        "price": last, "trend": "平稳", "unit": item_info["unit"], "source": "manual"
-                    }
-                    print(f"    {item_name}: CNY{last} (manual)")
+    try:
+        for cat_name, cat_data in history.get('categories', {}).items():
+            if cat_name == 'PCB':
                 continue
+            for item_name, item_data in cat_data.get('items', {}).items():
+                for brand_name, brand_data in item_data.get('brands', {}).items():
+                    kw = brand_data.get('keyword')
+                    if not kw:
+                        continue
 
-            data = scrape_with_selenium(item_info["keyword"])
-            if data:
-                prev = get_last_price(history, cat_name, item_name)
-                trend = determine_trend(data["price"], prev)
-                results[cat_name]["items"][item_name] = {
-                    "price": data["price"], "trend": trend, "unit": item_info["unit"], "source": "lcsc"
-                }
-                scraped += 1
-                print(f"    {item_name}: CNY{data['price']} ({trend}) stock={data['stock']:,}")
-            else:
-                last = get_last_price(history, cat_name, item_name)
-                if last is not None:
-                    results[cat_name]["items"][item_name] = {
-                        "price": last, "trend": "数据待更新", "unit": item_info["unit"], "source": "fallback"
-                    }
-                    print(f"    {item_name}: CNY{last} (fallback)")
+                    price, real_brand, err = scrape_lcsc(driver, kw)
+                    if price:
+                        if item_name not in results:
+                            results[item_name] = {}
+                        results[item_name][brand_name] = price
+                        scraped += 1
+                        print(f"    {item_name} [{brand_name}]: CNY{price}")
+                    else:
+                        print(f"    {item_name} [{brand_name}]: {err}")
+    finally:
+        driver.quit()
 
     return results, scraped
 
 
 def append_to_history(history, results, today):
-    for cat_name, cat_data in results.items():
-        if cat_name not in history["categories"]:
-            history["categories"][cat_name] = {"label": cat_data["label"], "items": {}}
+    """将新价格追加到历史"""
+    for cat_name, cat_data in history.get('categories', {}).items():
+        for item_name, item_data in cat_data.get('items', {}).items():
+            for brand_name, brand_data in item_data.get('brands', {}).items():
+                if item_name in results and brand_name in results[item_name]:
+                    new_price = results[item_name][brand_name]
+                    hist = brand_data.get('history', [])
 
-        for item_name, item_data in cat_data["items"].items():
-            if item_name not in history["categories"][cat_name]["items"]:
-                history["categories"][cat_name]["items"][item_name] = {
-                    "unit": item_data["unit"], "history": []
-                }
+                    # 计算趋势
+                    if hist:
+                        prev = hist[-1]['price']
+                        pct = (new_price - prev) / prev * 100 if prev else 0
+                        if abs(pct) < 1:
+                            trend = '平稳'
+                        elif pct >= 5:
+                            trend = f'上涨 +{pct:.1f}%'
+                        elif pct >= 1:
+                            trend = f'微涨 +{pct:.1f}%'
+                        elif pct <= -5:
+                            trend = f'下跌 {pct:.1f}%'
+                        else:
+                            trend = f'微跌 {pct:.1f}%'
+                    else:
+                        trend = '新增'
 
-            hist = history["categories"][cat_name]["items"][item_name]["history"]
-            if hist and hist[-1]["date"] == today:
-                hist[-1]["price"] = item_data["price"]
-                hist[-1]["trend"] = item_data["trend"]
-            else:
-                hist.append({"date": today, "price": item_data["price"], "trend": item_data["trend"]})
+                    if hist and hist[-1]['date'] == today:
+                        hist[-1]['price'] = new_price
+                        hist[-1]['trend'] = trend
+                    else:
+                        hist.append({'date': today, 'price': new_price, 'trend': trend})
+                    brand_data['history'] = hist
 
-    history["last_update"] = today
+    history['last_update'] = today
     return history
 
 
-def update_html_tables(results, today):
+def update_html(history, today):
+    """更新 index.html 中的阻容感表格"""
     if not HTML_FILE.exists():
         return
 
     with open(HTML_FILE, 'r', encoding='utf-8') as f:
         html = f.read()
 
-    for cat_name, cat_data in results.items():
-        label = cat_data["label"]
-        items = cat_data["items"]
+    for cat_name, cat_data in history.get('categories', {}).items():
+        label = cat_data['label']
+        items = cat_data.get('items', {})
         if not items:
             continue
 
         rows = []
         for item_name, item_data in items.items():
-            price_val = item_data["price"]
-            unit = item_data["unit"]
-            trend = item_data["trend"]
+            brands = item_data.get('brands', {})
+            unit = item_data.get('unit', '')
+
+            # 取第一个有数据的品牌价格
+            display_brand = None
+            display_price = None
+            display_trend = None
+            for brand_name, brand_data in brands.items():
+                hist = brand_data.get('history', [])
+                if hist:
+                    latest = hist[-1]
+                    if display_price is None:
+                        display_brand = brand_name
+                        display_price = latest['price']
+                        display_trend = latest.get('trend', '平稳')
+
+            if display_price is None:
+                continue
 
             suffix = unit.split('/')[-1] if '/' in unit else ''
-            if price_val >= 100:
-                price_str = f"CNY{price_val:,.0f}/{suffix}" if suffix else f"CNY{price_val:,.0f}"
-            elif price_val >= 1:
-                price_str = f"CNY{price_val:.2f}/{suffix}" if suffix else f"CNY{price_val:.2f}"
+            if display_price >= 100:
+                price_str = f"CNY{display_price:,.0f}"
+            elif display_price >= 1:
+                price_str = f"CNY{display_price:.2f}"
             else:
-                price_str = f"CNY{price_val}/{suffix}" if suffix else f"CNY{price_val}"
+                price_str = f"CNY{display_price}"
 
-            if '涨' in trend or '紧' in trend:
+            if suffix:
+                price_str += f"/{suffix}"
+
+            # 趋势样式
+            if display_trend and ('涨' in display_trend or '紧' in display_trend):
                 td_class = 'price-up'
-            elif '跌' in trend:
+            elif display_trend and '跌' in display_trend:
                 td_class = 'price-down'
             else:
                 td_class = 'price-flat'
 
-            rows.append(f'<tr><td>{item_name}</td><td>{price_str}</td><td class="{td_class}">{trend}</td></tr>')
+            # 品牌信息
+            brand_names = [b for b in brands.keys() if brands[b].get('history')]
+            brand_str = ' / '.join(brand_names) if brand_names else ''
+
+            rows.append(
+                f'<tr><td>{item_name}</td>'
+                f'<td><span style="color:#94a3b8;font-size:10px">{brand_str}</span><br>{price_str}</td>'
+                f'<td class="{td_class}">{display_trend or "—"}</td></tr>'
+            )
+
+        if not rows:
+            continue
 
         rows_html = '\n                        '.join(rows)
         escaped_label = re.escape(label)
@@ -282,27 +228,28 @@ def update_html_tables(results, today):
 
     with open(HTML_FILE, 'w', encoding='utf-8') as f:
         f.write(html)
-    print(f"  [OK] index.html updated")
+    print("  [OK] index.html updated")
 
 
 def main():
     today = datetime.now().strftime('%Y-%m-%d')
     print("=" * 50)
-    print("阻容感/PCB Price Tracker")
+    print("Passive Components Price Tracker (by brand)")
     print(f"Date: {today}")
     print("=" * 50)
 
     history = load_history()
     print(f"Last update: {history.get('last_update', 'none')}")
 
-    results, scraped = scrape_prices(history)
+    print("\nScraping from LCSC...")
+    results, scraped = scrape_all(history)
+    print(f"\nScraped: {scraped} brand-item pairs")
 
     history = append_to_history(history, results, today)
     save_history(history)
-    update_html_tables(results, today)
+    update_html(history, today)
 
-    total = sum(len(cat["items"]) for cat in results.values())
-    print(f"\nDone! {total} items, {scraped} scraped from LCSC")
+    print(f"\nDone!")
 
 
 if __name__ == '__main__':

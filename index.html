@@ -1321,15 +1321,16 @@ function renderPassiveTrendSummary() {
     if (!container) return;
     container.innerHTML = '';
     for (const [catName, catData] of Object.entries(passiveHistoryData.categories || {})) {
-        const items = catData.items || {};
         let hasUp = false, hasDown = false;
-        for (const item of Object.values(items)) {
-            const hist = item.history || [];
-            if (hist.length >= 2) {
-                const latest = hist[hist.length - 1].price;
-                const prev = hist[hist.length - 2].price;
-                if (latest > prev) hasUp = true;
-                else if (latest < prev) hasDown = true;
+        for (const item of Object.values(catData.items || {})) {
+            for (const brand of Object.values(item.brands || {})) {
+                const hist = brand.history || [];
+                if (hist.length >= 2) {
+                    const latest = hist[hist.length - 1].price;
+                    const prev = hist[hist.length - 2].price;
+                    if (latest > prev) hasUp = true;
+                    else if (latest < prev) hasDown = true;
+                }
             }
         }
         let cls = 'flat', icon = '→';
@@ -1341,34 +1342,42 @@ function renderPassiveTrendSummary() {
 
 function renderPassiveCharts() {
     if (!passiveHistoryData) return;
+    const COLORS = ['#3b82f6', '#8b5cf6', '#f472b6', '#fb923c', '#4ade80'];
     for (const [catName, catData] of Object.entries(passiveHistoryData.categories || {})) {
-        if (catName === 'PCB') continue; // PCB 价格跨度大，不画趋势图
+        if (catName === 'PCB') continue;
         const canvasId = 'passiveChart_' + catName;
         const canvas = document.getElementById(canvasId);
         if (!canvas) continue;
         const items = catData.items || {};
+        // 收集所有日期（跨品牌）
         const allDates = new Set();
         for (const item of Object.values(items)) {
-            for (const h of (item.history || [])) allDates.add(h.date);
+            for (const brand of Object.values(item.brands || {})) {
+                for (const h of (brand.history || [])) allDates.add(h.date);
+            }
         }
         const dates = [...allDates].sort();
-        if (dates.length < 2) continue; // 只有一个数据点不画图
+        if (dates.length < 2) continue;
         const labels = dates.map(d => d.substring(5));
-        const colors = ['#3b82f6', '#8b5cf6', '#f472b6', '#fb923c', '#4ade80'];
         const datasets = [];
-        let i = 0;
+        let ci = 0;
         for (const [itemName, itemData] of Object.entries(items)) {
-            const priceMap = {};
-            for (const h of (itemData.history || [])) priceMap[h.date] = h.price;
-            datasets.push({
-                label: itemName.split(' ')[0],
-                data: dates.map(d => priceMap[d] ?? null),
-                borderColor: colors[i % colors.length],
-                backgroundColor: colors[i % colors.length] + '1a',
-                fill: true, tension: 0.4, pointRadius: 3
-            });
-            i++;
+            for (const [brandName, brandData] of Object.entries(itemData.brands || {})) {
+                if (!(brandData.history || []).length) continue;
+                const priceMap = {};
+                for (const h of brandData.history) priceMap[h.date] = h.price;
+                const shortItem = itemName.split(' ')[0];
+                datasets.push({
+                    label: shortItem + ' ' + brandName,
+                    data: dates.map(d => priceMap[d] ?? null),
+                    borderColor: COLORS[ci % COLORS.length],
+                    backgroundColor: COLORS[ci % COLORS.length] + '1a',
+                    fill: true, tension: 0.4, pointRadius: 3
+                });
+                ci++;
+            }
         }
+        if (!datasets.length) continue;
         new Chart(canvas, {
             type: 'line',
             data: { labels, datasets },
@@ -1389,90 +1398,108 @@ function showPassiveDetail(catName) {
     const catData = (passiveHistoryData.categories || {})[catName];
     if (!catData) { alert('暂无「' + catName + '」的历史数据'); return; }
     const items = catData.items || {};
+
+    // 收集所有日期（跨品牌）
     const allDates = new Set();
     for (const item of Object.values(items)) {
-        for (const h of (item.history || [])) allDates.add(h.date);
+        for (const brand of Object.values(item.brands || {})) {
+            for (const h of (brand.history || [])) allDates.add(h.date);
+        }
     }
     const dates = [...allDates].sort();
+    if (!dates.length) { alert('暂无历史数据'); return; }
 
-    // 构建弹窗内容
-    let tableHtml = '<table class="detail-table"><thead><tr><th>日期</th>';
-    for (const itemName of Object.keys(items)) {
-        tableHtml += '<th>' + itemName + '</th>';
-    }
-    tableHtml += '</tr></thead><tbody>';
+    // 构建弹窗：每个物料一个子表，行=日期，列=品牌
+    let html = '';
+    const COLORS = ['#3b82f6', '#8b5cf6', '#f472b6', '#fb923c', '#4ade80'];
 
-    for (let di = 0; di < dates.length; di++) {
-        const d = dates[di];
-        tableHtml += '<tr><td class="week-col">' + d + '</td>';
-        for (const itemData of Object.values(items)) {
-            const hist = itemData.history || [];
-            const entry = hist.find(h => h.date === d);
-            if (entry) {
-                let changeHtml = '';
-                if (di > 0) {
-                    const prevEntry = hist.find(h => h.date === dates[di - 1]);
-                    if (prevEntry) {
-                        const pct = ((entry.price - prevEntry.price) / prevEntry.price * 100);
-                        if (Math.abs(pct) >= 0.5) {
-                            const cls = pct > 0 ? 'change-up' : 'change-down';
-                            changeHtml = `<br><span class="${cls}" style="font-size:10px">${pct > 0 ? '+' : ''}${pct.toFixed(1)}%</span>`;
+    for (const [itemName, itemData] of Object.entries(items)) {
+        const brands = itemData.brands || {};
+        const brandNames = Object.keys(brands);
+        const unit = itemData.unit || '';
+
+        html += `<div style="margin-bottom:20px">`;
+        html += `<div style="font-size:14px;font-weight:600;color:#e2e8f0;margin-bottom:8px">${itemName}</div>`;
+        html += `<table class="detail-table"><thead><tr><th>日期</th>`;
+        for (const b of brandNames) html += `<th>${b}</th>`;
+        html += `</tr></thead><tbody>`;
+
+        for (let di = 0; di < dates.length; di++) {
+            const d = dates[di];
+            html += `<tr><td class="week-col">${d}</td>`;
+            for (const brandName of brandNames) {
+                const hist = (brands[brandName] || {}).history || [];
+                const entry = hist.find(h => h.date === d);
+                if (entry) {
+                    let changeHtml = '';
+                    if (di > 0) {
+                        const prev = hist.find(h => h.date === dates[di - 1]);
+                        if (prev) {
+                            const pct = (entry.price - prev.price) / prev.price * 100;
+                            if (Math.abs(pct) >= 0.5) {
+                                const cls = pct > 0 ? 'change-up' : 'change-down';
+                                changeHtml = `<br><span class="${cls}" style="font-size:10px">${pct > 0 ? '+' : ''}${pct.toFixed(1)}%</span>`;
+                            }
                         }
                     }
+                    const pStr = entry.price >= 1 ? '¥' + entry.price.toFixed(2) : '¥' + entry.price;
+                    html += `<td>${pStr}${changeHtml}</td>`;
+                } else {
+                    html += `<td style="color:#334155">—</td>`;
                 }
-                const priceStr = entry.price >= 1 ? '¥' + entry.price.toFixed(2) : '¥' + entry.price;
-                tableHtml += '<td>' + priceStr + changeHtml + '</td>';
-            } else {
-                tableHtml += '<td style="color:#334155">-</td>';
             }
+            html += `</tr>`;
         }
-        tableHtml += '</tr>';
-    }
-    tableHtml += '</tbody></table>';
+        html += `</tbody></table>`;
 
-    // 趋势图
-    const chartId = 'detailChart_' + catName;
-    const chartHtml = catName !== 'PCB' && dates.length >= 2
-        ? `<div class="detail-chart-area"><canvas id="${chartId}"></canvas></div>`
-        : '';
+        // 每个物料的小趋势图
+        if (catName !== 'PCB' && dates.length >= 2) {
+            const canvasId = `detailChart_${catName}_${itemName.replace(/\s/g, '')}`;
+            html += `<div class="detail-chart-area"><canvas id="${canvasId}"></canvas></div>`;
+        }
+        html += `</div>`;
+    }
 
     const label = catData.label || catName;
-    document.getElementById('detailModalTitle').innerHTML = label + ' · 价格走势详情';
-    document.getElementById('detailModalBody').innerHTML = chartHtml + tableHtml;
+    document.getElementById('detailModalTitle').innerHTML = label + ' · 价格走势详情（按品牌）';
+    document.getElementById('detailModalBody').innerHTML = html;
     document.getElementById('detailModal').classList.add('show');
 
-    // 渲染弹窗内的图表
+    // 渲染每个物料的趋势图
     if (catName !== 'PCB' && dates.length >= 2) {
-        const canvas = document.getElementById(chartId);
-        if (canvas) {
+        let ci = 0;
+        for (const [itemName, itemData] of Object.entries(items)) {
+            const brands = itemData.brands || {};
+            const canvasId = `detailChart_${catName}_${itemName.replace(/\s/g, '')}`;
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) continue;
             const labels = dates.map(d => d.substring(5));
-            const colors = ['#3b82f6', '#8b5cf6', '#f472b6', '#fb923c', '#4ade80'];
             const datasets = [];
-            let i = 0;
-            for (const [itemName, itemData] of Object.entries(items)) {
+            let bi = 0;
+            for (const [brandName, brandData] of Object.entries(brands)) {
                 const priceMap = {};
-                for (const h of (itemData.history || [])) priceMap[h.date] = h.price;
+                for (const h of (brandData.history || [])) priceMap[h.date] = h.price;
                 datasets.push({
-                    label: itemName,
+                    label: brandName,
                     data: dates.map(d => priceMap[d] ?? null),
-                    borderColor: colors[i % colors.length],
-                    backgroundColor: colors[i % colors.length] + '1a',
+                    borderColor: COLORS[bi % COLORS.length],
+                    backgroundColor: COLORS[bi % COLORS.length] + '1a',
                     fill: true, tension: 0.4, pointRadius: 4
                 });
-                i++;
+                bi++;
             }
-            new Chart(canvas, {
-                type: 'line',
-                data: { labels, datasets },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { position: 'top', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } } },
-                    scales: {
-                        y: { grid: { color: 'rgba(255,255,255,0.03)' } },
-                        x: { grid: { display: false } }
+            if (datasets.length) {
+                new Chart(canvas, {
+                    type: 'line',
+                    data: { labels, datasets },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { position: 'top', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } } },
+                        scales: { y: { grid: { color: 'rgba(255,255,255,0.03)' } }, x: { grid: { display: false } } }
                     }
-                }
-            });
+                });
+            }
+            ci++;
         }
     }
 }
