@@ -1122,14 +1122,14 @@ function initCharts() {
     Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
     Chart.defaults.font.family = '-apple-system, PingFang SC, Microsoft YaHei, sans-serif';
 
-    // DRAM Price Chart
+    // DRAM Price Chart (weekly: 7/7 ~ 8/31)
     new Chart(document.getElementById('dramChart'), {
         type: 'line',
         data: {
-            labels: ['1月','2月','3月','4月','5月','6月','7月','8月'],
+            labels: ['7/7','7/13','7/20','7/27','8/3','8/10','8/17','8/24','8/31'],
             datasets: [
-                { label: 'DDR5 16Gb', data: [38,37,36,35.5,35,35,35,40], borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.4, pointRadius: 3 },
-                { label: 'DDR4 8Gb', data: [20,19.5,19,18.5,18,18,18,22], borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.1)', fill: true, tension: 0.4, pointRadius: 3 }
+                { label: 'DDR5 16Gb', data: [35,35,35,35,35,40,40,40,40], borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.4, pointRadius: 3 },
+                { label: 'DDR4 8Gb', data: [18,18,18,18,18,22,22,22,22], borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.1)', fill: true, tension: 0.4, pointRadius: 3 }
             ]
         },
         options: {
@@ -1139,15 +1139,15 @@ function initCharts() {
         }
     });
 
-    // RDIMM Price Chart
+    // RDIMM Price Chart (weekly: 7/7 ~ 8/31)
     new Chart(document.getElementById('rdimmChart'), {
         type: 'bar',
         data: {
-            labels: ['1月','2月','3月','4月','5月','6月','7月','8月'],
+            labels: ['7/7','7/13','7/20','7/27','8/3','8/10','8/17','8/24','8/31'],
             datasets: [
-                { label: '32GB', data: [680,690,700,710,720,730,730,900], backgroundColor: 'rgba(59,130,246,0.6)', borderRadius: 4 },
-                { label: '64GB', data: [1250,1280,1300,1320,1350,1380,1380,1590], backgroundColor: 'rgba(139,92,246,0.6)', borderRadius: 4 },
-                { label: '96GB', data: [2050,2100,2150,2200,2250,2310,2310,2650], backgroundColor: 'rgba(244,114,182,0.6)', borderRadius: 4 }
+                { label: '32GB', data: [730,730,730,730,730,900,900,900,900], backgroundColor: 'rgba(59,130,246,0.6)', borderRadius: 4 },
+                { label: '64GB', data: [1380,1380,1380,1380,1380,1590,1590,1590,1590], backgroundColor: 'rgba(139,92,246,0.6)', borderRadius: 4 },
+                { label: '96GB', data: [2310,2310,2310,2310,2310,2650,2650,2650,2650], backgroundColor: 'rgba(244,114,182,0.6)', borderRadius: 4 }
             ]
         },
         options: {
@@ -1157,14 +1157,14 @@ function initCharts() {
         }
     });
 
-    // LPDDR5X Price Chart
+    // LPDDR5X Price Chart (weekly: 7/7 ~ 8/31)
     new Chart(document.getElementById('lpddrChart'), {
         type: 'line',
         data: {
-            labels: ['1月','2月','3月','4月','5月','6月','7月','8月'],
+            labels: ['7/7','7/13','7/20','7/27','8/3','8/10','8/17','8/24','8/31'],
             datasets: [
-                { label: '128Gb', data: [210,215,218,222,228,235,235,235], borderColor: '#f472b6', backgroundColor: 'rgba(244,114,182,0.1)', fill: true, tension: 0.4, pointRadius: 3 },
-                { label: '64Gb', data: [95,98,100,103,108,114,114,114], borderColor: '#fb923c', backgroundColor: 'rgba(251,146,60,0.1)', fill: true, tension: 0.4, pointRadius: 3 }
+                { label: '128Gb', data: [235,235,235,235,235,235,235,235,235], borderColor: '#f472b6', backgroundColor: 'rgba(244,114,182,0.1)', fill: true, tension: 0.4, pointRadius: 3 },
+                { label: '64Gb', data: [114,114,114,114,114,114,114,114,114], borderColor: '#fb923c', backgroundColor: 'rgba(251,146,60,0.1)', fill: true, tension: 0.4, pointRadius: 3 }
             ]
         },
         options: {
