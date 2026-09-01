@@ -1,14 +1,20 @@
 #!/usr/bin/env python3
 """
 阻容感/PCB 常用物料价格追踪（按品牌）
-数据来源：立创商城 (szlcsc.com) via Selenium
+数据来源：立创商城 (szlcsc.com) via Selenium / 手动输入
 功能：按品牌抓取价格 -> 追加历史记录 -> 更新 index.html
+
+用法：
+  python update_passive.py              # 自动抓取（需 Selenium + Chrome）
+  python update_passive.py --manual     # 手动输入价格（交互式）
+  python update_passive.py --show       # 查看当前历史数据
 """
 
 import json
 import re
 import sys
 import io
+import argparse
 from datetime import datetime
 from pathlib import Path
 
@@ -107,6 +113,57 @@ def scrape_all(history):
     return results, scraped
 
 
+def manual_input(history):
+    """交互式手动输入价格"""
+    today = datetime.now().strftime('%Y-%m-%d')
+    results = {}
+
+    print(f"\n{'='*60}")
+    print(f"  手动输入阻容感价格  日期: {today}")
+    print(f"{'='*60}")
+    print("  提示: 直接回车跳过，输入 'q' 结束\n")
+
+    for cat_name, cat_data in history.get('categories', {}).items():
+        label = cat_data.get('label', cat_name)
+        print(f"\n━━━ {label} ━━━")
+
+        for item_name, item_data in cat_data.get('items', {}).items():
+            brands = item_data.get('brands', {})
+            unit = item_data.get('unit', '')
+
+            # 显示上次价格
+            last_prices = []
+            for brand_name, brand_data in brands.items():
+                hist = brand_data.get('history', [])
+                if hist:
+                    last_prices.append(f"{brand_name}: ¥{hist[-1]['price']}")
+            hint = f"  (上次: {', '.join(last_prices)})" if last_prices else ""
+
+            print(f"\n  📦 {item_name} [{unit}]{hint}")
+
+            for brand_name, brand_data in brands.items():
+                hist = brand_data.get('history', [])
+                last = hist[-1]['price'] if hist else None
+                default_hint = f" (上次: ¥{last})" if last is not None else ""
+
+                val = input(f"    {brand_name}{default_hint}: ").strip()
+                if val.lower() == 'q':
+                    print("\n  结束输入。")
+                    return results, today
+                if val == '':
+                    continue
+                try:
+                    price = float(val)
+                    if item_name not in results:
+                        results[item_name] = {}
+                    results[item_name][brand_name] = price
+                    print(f"      ✓ ¥{price}")
+                except ValueError:
+                    print(f"      ✗ 无效输入，跳过")
+
+    return results, today
+
+
 def append_to_history(history, results, today):
     """将新价格追加到历史"""
     for cat_name, cat_data in history.get('categories', {}).items():
@@ -142,6 +199,41 @@ def append_to_history(history, results, today):
 
     history['last_update'] = today
     return history
+
+
+def show_history(history):
+    """显示当前历史数据摘要"""
+    print(f"\n{'='*60}")
+    print(f"  阻容感价格历史数据  最后更新: {history.get('last_update', '无')}")
+    print(f"{'='*60}")
+
+    for cat_name, cat_data in history.get('categories', {}).items():
+        label = cat_data.get('label', cat_name)
+        print(f"\n{label}")
+        print(f"{'─'*50}")
+
+        for item_name, item_data in cat_data.get('items', {}).items():
+            brands = item_data.get('brands', {})
+            unit = item_data.get('unit', '')
+            print(f"\n  {item_name} [{unit}]")
+
+            for brand_name, brand_data in brands.items():
+                hist = brand_data.get('history', [])
+                if not hist:
+                    print(f"    {brand_name}: 暂无数据")
+                    continue
+
+                latest = hist[-1]
+                n = len(hist)
+                if n >= 2:
+                    prev = hist[-2]['price']
+                    pct = (latest['price'] - prev) / prev * 100 if prev else 0
+                    arrow = '↑' if pct > 0 else ('↓' if pct < 0 else '→')
+                    print(f"    {brand_name}: ¥{latest['price']} {arrow}{abs(pct):.1f}% ({n}条记录, {hist[0]['date']}~{latest['date']})")
+                else:
+                    print(f"    {brand_name}: ¥{latest['price']} ({n}条记录)")
+
+    print()
 
 
 def update_html(history, today):
@@ -232,6 +324,11 @@ def update_html(history, today):
 
 
 def main():
+    parser = argparse.ArgumentParser(description='阻容感价格追踪工具')
+    parser.add_argument('--manual', action='store_true', help='手动输入价格（交互式）')
+    parser.add_argument('--show', action='store_true', help='查看当前历史数据')
+    args = parser.parse_args()
+
     today = datetime.now().strftime('%Y-%m-%d')
     print("=" * 50)
     print("Passive Components Price Tracker (by brand)")
@@ -241,9 +338,23 @@ def main():
     history = load_history()
     print(f"Last update: {history.get('last_update', 'none')}")
 
-    print("\nScraping from LCSC...")
-    results, scraped = scrape_all(history)
-    print(f"\nScraped: {scraped} brand-item pairs")
+    if args.show:
+        show_history(history)
+        return
+
+    if args.manual:
+        results, today = manual_input(history)
+        if not results:
+            print("\n  没有输入任何价格，退出。")
+            return
+    else:
+        if not HAS_SELENIUM:
+            print("\n  [ERROR] Selenium 未安装，无法自动抓取。")
+            print("  请使用 --manual 模式手动输入，或安装: pip install selenium")
+            return
+        print("\nScraping from LCSC...")
+        results, scraped = scrape_all(history)
+        print(f"\nScraped: {scraped} brand-item pairs")
 
     history = append_to_history(history, results, today)
     save_history(history)

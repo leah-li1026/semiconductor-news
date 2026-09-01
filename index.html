@@ -1342,14 +1342,13 @@ function renderPassiveTrendSummary() {
 
 function renderPassiveCharts() {
     if (!passiveHistoryData) return;
-    const COLORS = ['#3b82f6', '#8b5cf6', '#f472b6', '#fb923c', '#4ade80'];
+    const COLORS = ['#3b82f6', '#8b5cf6', '#f472b6', '#fb923c', '#4ade80', '#06b6d4', '#eab308'];
     for (const [catName, catData] of Object.entries(passiveHistoryData.categories || {})) {
         if (catName === 'PCB') continue;
         const canvasId = 'passiveChart_' + catName;
         const canvas = document.getElementById(canvasId);
         if (!canvas) continue;
         const items = catData.items || {};
-        // 收集所有日期（跨品牌）
         const allDates = new Set();
         for (const item of Object.values(items)) {
             for (const brand of Object.values(item.brands || {})) {
@@ -1366,26 +1365,49 @@ function renderPassiveCharts() {
                 if (!(brandData.history || []).length) continue;
                 const priceMap = {};
                 for (const h of brandData.history) priceMap[h.date] = h.price;
-                const shortItem = itemName.split(' ')[0];
+                const shortItem = itemName.length > 10 ? itemName.substring(0, 10) + '…' : itemName;
+                const borderColor = COLORS[ci % COLORS.length];
                 datasets.push({
-                    label: shortItem + ' ' + brandName,
+                    label: shortItem + ' · ' + brandName,
                     data: dates.map(d => priceMap[d] ?? null),
-                    borderColor: COLORS[ci % COLORS.length],
-                    backgroundColor: COLORS[ci % COLORS.length] + '1a',
-                    fill: true, tension: 0.4, pointRadius: 3
+                    borderColor: borderColor,
+                    backgroundColor: borderColor + '1a',
+                    fill: false, tension: 0.35, pointRadius: 4, pointHoverRadius: 6,
+                    borderWidth: 2
                 });
                 ci++;
             }
         }
         if (!datasets.length) continue;
+        // 判断价格量级决定小数位
+        const allPrices = datasets.flatMap(ds => ds.data.filter(v => v != null));
+        const maxPrice = Math.max(...allPrices);
+        const decimals = maxPrice >= 100 ? 0 : maxPrice >= 1 ? 2 : maxPrice >= 0.01 ? 4 : 6;
         new Chart(canvas, {
             type: 'line',
             data: { labels, datasets },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { position: 'top', labels: { boxWidth: 10, padding: 8, font: { size: 10 } } } },
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { position: 'top', labels: { boxWidth: 10, padding: 6, font: { size: 10 }, usePointStyle: true } },
+                    tooltip: {
+                        backgroundColor: 'rgba(15,22,41,0.95)', titleColor: '#e2e8f0', bodyColor: '#94a3b8',
+                        borderColor: '#334155', borderWidth: 1, padding: 10, cornerRadius: 8,
+                        callbacks: {
+                            label: function(ctx) {
+                                const v = ctx.parsed.y;
+                                if (v == null) return ctx.dataset.label + ': —';
+                                return ctx.dataset.label + ': ¥' + v.toFixed(decimals);
+                            }
+                        }
+                    }
+                },
                 scales: {
-                    y: { grid: { color: 'rgba(255,255,255,0.03)' } },
+                    y: {
+                        grid: { color: 'rgba(255,255,255,0.03)' },
+                        ticks: { callback: function(v) { return '¥' + (maxPrice >= 100 ? v.toFixed(0) : v.toFixed(decimals)); } }
+                    },
                     x: { grid: { display: false } }
                 }
             }
@@ -1465,9 +1487,8 @@ function showPassiveDetail(catName) {
     document.getElementById('detailModalBody').innerHTML = html;
     document.getElementById('detailModal').classList.add('show');
 
-    // 渲染每个物料的趋势图
+    // 渲染每个物料的趋势图（按品牌对比）
     if (catName !== 'PCB' && dates.length >= 2) {
-        let ci = 0;
         for (const [itemName, itemData] of Object.entries(items)) {
             const brands = itemData.brands || {};
             const canvasId = `detailChart_${catName}_${itemName.replace(/\s/g, '')}`;
@@ -1476,30 +1497,62 @@ function showPassiveDetail(catName) {
             const labels = dates.map(d => d.substring(5));
             const datasets = [];
             let bi = 0;
+            const allPrices = [];
             for (const [brandName, brandData] of Object.entries(brands)) {
                 const priceMap = {};
-                for (const h of (brandData.history || [])) priceMap[h.date] = h.price;
+                for (const h of (brandData.history || [])) { priceMap[h.date] = h.price; allPrices.push(h.price); }
                 datasets.push({
                     label: brandName,
                     data: dates.map(d => priceMap[d] ?? null),
                     borderColor: COLORS[bi % COLORS.length],
                     backgroundColor: COLORS[bi % COLORS.length] + '1a',
-                    fill: true, tension: 0.4, pointRadius: 4
+                    fill: false, tension: 0.35, pointRadius: 5, pointHoverRadius: 7, borderWidth: 2.5
                 });
                 bi++;
             }
-            if (datasets.length) {
-                new Chart(canvas, {
-                    type: 'line',
-                    data: { labels, datasets },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { position: 'top', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } } },
-                        scales: { y: { grid: { color: 'rgba(255,255,255,0.03)' } }, x: { grid: { display: false } } }
+            if (!datasets.length) continue;
+            const maxP = Math.max(...allPrices);
+            const dec = maxP >= 100 ? 0 : maxP >= 1 ? 2 : maxP >= 0.01 ? 4 : 6;
+            new Chart(canvas, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { position: 'top', labels: { boxWidth: 12, padding: 10, font: { size: 11 }, usePointStyle: true } },
+                        tooltip: {
+                            backgroundColor: 'rgba(15,22,41,0.95)', titleColor: '#e2e8f0', bodyColor: '#94a3b8',
+                            borderColor: '#334155', borderWidth: 1, padding: 12, cornerRadius: 8,
+                            callbacks: {
+                                label: function(ctx) {
+                                    const v = ctx.parsed.y;
+                                    if (v == null) return ctx.dataset.label + ': —';
+                                    let txt = ctx.dataset.label + ': ¥' + v.toFixed(dec);
+                                    // 显示环比变化
+                                    const idx = ctx.dataIndex;
+                                    if (idx > 0) {
+                                        const prev = ctx.dataset.data[idx - 1];
+                                        if (prev != null && prev > 0) {
+                                            const pct = (v - prev) / prev * 100;
+                                            const sign = pct >= 0 ? '+' : '';
+                                            txt += ` (${sign}${pct.toFixed(1)}%)`;
+                                        }
+                                    }
+                                    return txt;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: { color: 'rgba(255,255,255,0.03)' },
+                            ticks: { callback: function(v) { return '¥' + (maxP >= 100 ? v.toFixed(0) : v.toFixed(dec)); } }
+                        },
+                        x: { grid: { display: false } }
                     }
-                });
-            }
-            ci++;
+                }
+            });
         }
     }
 }
