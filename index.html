@@ -1418,7 +1418,7 @@ async function init() {
     loadNews();
 }
 
-document.addEventListener('DOMContentLoaded', function() { init(); });
+document.addEventListener('DOMContentLoaded', function() { init().catch(function(e) { console.error('Init error:', e); }); });
 
 // ===== 阻容感历史追踪 =====
 let passiveHistoryData = null;
