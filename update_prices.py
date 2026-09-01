@@ -10,7 +10,9 @@
 import re
 import sys
 import io
+import json
 from datetime import datetime
+from pathlib import Path
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
@@ -120,6 +122,72 @@ def format_price(val_str):
             return f'${val}'
     except ValueError:
         return f'${val_str}'
+
+
+SCRIPT_DIR = Path(__file__).parent
+HISTORY_FILE = SCRIPT_DIR / '_storage_history.json'
+
+
+def update_storage_history(prices, today):
+    """将新价格追加到 _storage_history.json（走势图数据源）"""
+    history = {}
+    if HISTORY_FILE.exists():
+        with open(HISTORY_FILE, 'r', encoding='utf-8') as f:
+            history = json.load(f)
+
+    # DRAM
+    dram = {}
+    for name in ['DDR4 16Gb 3200', 'DDR4 8Gb 3200', 'DDR4 8Gb eTT', 'DDR5 24Gb Major', 'DDR5 16Gb Major', 'DDR5 16Gb eTT']:
+        if name in prices:
+            try: dram[name] = float(prices[name]['price'].replace(',', ''))
+            except: pass
+    # RDIMM
+    rdimm = {}
+    for name in ['DDR5 RDIMM 32GB', 'DDR5 RDIMM 64GB', 'DDR5 RDIMM 96GB']:
+        if name in prices:
+            try: rdimm[name] = float(prices[name]['price'].replace(',', ''))
+            except: pass
+    # LPDDR5X
+    lpddr = {}
+    for name in ['LPDDR5X 128Gb', 'LPDDR5X 96Gb', 'LPDDR5X 64Gb', 'LPDDR5X 48Gb', 'LPDDR5X 32Gb']:
+        if name in prices:
+            try: lpddr[name] = float(prices[name]['price'].replace(',', ''))
+            except: pass
+    # Enterprise SSD
+    essd = {}
+    for cfm_name, short in [('PCIe 3.0 256GB','PCIe3.0 256GB'),('PCIe 3.0 512GB','PCIe3.0 512GB'),('PCIe 3.0 1TB','PCIe3.0 1TB'),('PCIe 4.0 512GB','PCIe4.0 512GB'),('PCIe 4.0 1TB','PCIe4.0 1TB'),('PCIe 4.0 2TB','PCIe4.0 2TB')]:
+        if cfm_name in prices:
+            try: essd[short] = float(prices[cfm_name]['price'].replace(',', ''))
+            except: pass
+    # Consumer SSD
+    cssd = {}
+    for cfm_name, short in [('SSD(PCIe 3.0) 256GB','PCIe3.0 256GB'),('SSD(PCIe 3.0) 512GB','PCIe3.0 512GB'),('SSD(PCIe 3.0) 1TB','PCIe3.0 1TB'),('SSD(PCIe 4.0) 512GB','PCIe4.0 512GB'),('SSD(PCIe 4.0) 1TB','PCIe4.0 1TB'),('SSD(PCIe 4.0) 2TB','PCIe4.0 2TB')]:
+        if cfm_name in prices:
+            try: cssd[short] = float(prices[cfm_name]['price'].replace(',', ''))
+            except: pass
+    # NAND Wafer
+    nand = {}
+    for name in ['1Tb QLC', '1Tb TLC', '512Gb TLC', '256Gb TLC']:
+        if name in prices:
+            try: nand[name] = float(prices[name]['price'].replace(',', ''))
+            except: pass
+
+    # 只在有数据时更新
+    entry = {}
+    if dram: entry['dram'] = dram
+    if rdimm: entry['rdimm'] = rdimm
+    if lpddr: entry['lpddr'] = lpddr
+    if essd: entry['enterprise_ssd'] = essd
+    if cssd: entry['consumer_ssd'] = cssd
+    if nand: entry['nand_wafer'] = nand
+
+    if entry:
+        history[today] = entry
+        with open(HISTORY_FILE, 'w', encoding='utf-8') as f:
+            json.dump(history, f, ensure_ascii=False, indent=2)
+        print(f"  ✅ _storage_history.json 已更新 ({today})")
+    else:
+        print("  ⚠️ 无有效数据，跳过历史更新")
 
 
 def update_card_table(html, card_keyword, new_data, today):
@@ -259,6 +327,10 @@ def main():
 
     total = len(dram_items) + len(rdimm_items) + len(essd_items) + len(cssd_items) + len(lpddr_items) + len(nand_items)
     print(f"\n🎉 更新完成！共更新 {total} 条价格数据 ({today})")
+
+    # 5. 更新走势图历史数据
+    print("\n📈 正在更新走势图历史数据...")
+    update_storage_history(prices, today)
 
 
 if __name__ == '__main__':

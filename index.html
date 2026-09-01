@@ -215,6 +215,54 @@
             transition: all 0.2s;
         }
         .detail-modal-close:hover { background: #334155; color: #e2e8f0; }
+
+        /* Product info link */
+        .product-link {
+            color: #93c5fd; cursor: pointer; border-bottom: 1px dashed rgba(147,197,253,0.3);
+            transition: all 0.2s;
+        }
+        .product-link:hover { color: #bfdbfe; border-bottom-color: rgba(191,219,254,0.6); }
+
+        /* Product info modal */
+        .product-info-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.65); z-index: 1001; backdrop-filter: blur(3px);
+            justify-content: center; align-items: center; padding: 20px;
+        }
+        .product-info-overlay.show { display: flex; }
+        .product-info-box {
+            background: #111827; border: 1px solid #2a3158; border-radius: 14px;
+            max-width: 520px; width: 100%; padding: 24px; position: relative;
+        }
+        .product-info-box::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #06b6d4); border-radius: 14px 14px 0 0;
+        }
+        .product-info-title {
+            font-size: 16px; font-weight: 700; color: #e2e8f0; margin-bottom: 12px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .product-info-close {
+            background: #1e293b; border: 1px solid #334155; color: #94a3b8;
+            width: 28px; height: 28px; border-radius: 6px; cursor: pointer;
+            font-size: 14px; display: flex; align-items: center; justify-content: center;
+        }
+        .product-info-close:hover { background: #334155; color: #e2e8f0; }
+        .product-info-section { margin-bottom: 14px; }
+        .product-info-label {
+            font-size: 11px; color: #64748b; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;
+        }
+        .product-info-value {
+            font-size: 13px; color: #cbd5e1; line-height: 1.6;
+        }
+        .product-info-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .product-info-tag {
+            font-size: 11px; padding: 3px 10px; border-radius: 6px;
+            background: rgba(59,130,246,0.1); color: #60a5fa;
+            border: 1px solid rgba(59,130,246,0.15);
+        }
+
         .detail-table {
             width: 100%; border-collapse: collapse; margin-top: 12px;
         }
@@ -1362,9 +1410,11 @@ async function loadNews() {
 }
 
 // ===== Init =====
-function init() {
+async function init() {
     setDate();
-    initCharts();
+    await initCharts();
+    await loadPassiveHistory();
+    makeStorageProductsClickable();
     loadNews();
 }
 
@@ -1642,12 +1692,81 @@ function closePassiveDetail() {
     document.getElementById('detailModal').classList.remove('show');
 }
 
-// 在 init 中加载被动元件历史
-const origInit = init;
-init = function() {
-    origInit();
-    loadPassiveHistory();
+// ===== 产品介绍弹窗 =====
+const PRODUCT_INFO = {
+    // DRAM
+    'DDR4 16Gb 3200': { name: 'DDR4 16Gb 3200', cat: 'DRAM', icon: '💾', desc: 'DDR4 SDRAM 16Gb（2GB）容量颗粒，3200Mbps速率。用于服务器UDIMM/RDIMM内存条、高端台式机内存。', usage: '服务器内存条、台式机内存、工控设备', share: '服务器BOM成本约占3-5%，消费PC约占4-6%', tags: ['服务器','PC','工控'] },
+    'DDR4 8Gb 3200': { name: 'DDR4 8Gb 3200', cat: 'DRAM', icon: '💾', desc: 'DDR4 SDRAM 8Gb（1GB）容量颗粒，3200Mbps速率。目前最主流的DDR4规格，广泛用于消费级PC和入门级服务器。', usage: '消费PC内存条、路由器/交换机、嵌入式系统', share: '消费PC内存BOM约占3-5%，路由器约占1-2%', tags: ['PC','网络设备','嵌入式'] },
+    'DDR5 24Gb Major': { name: 'DDR5 24Gb Major', cat: 'DRAM', icon: '💾', desc: 'DDR5 SDRAM 24Gb（3GB）大容量颗粒，最新一代内存标准。用于AI服务器、高性能计算等对带宽要求极高的场景。', usage: 'AI服务器HBM配套、高端工作站、数据中心', share: 'AI服务器BOM中DRAM约占15-25%', tags: ['AI服务器','数据中心','HPC'] },
+    'DDR5 16Gb Major': { name: 'DDR5 16Gb Major', cat: 'DRAM', icon: '💾', desc: 'DDR5 SDRAM 16Gb（2GB）主流颗粒。新一代内存标准，频率更高、功耗更低，正在快速替代DDR4。', usage: '新一代服务器RDIMM、高端笔记本、游戏PC', share: '服务器RDIMM BOM约占20-30%', tags: ['服务器','笔记本','游戏PC'] },
+    'DDR5 16Gb eTT': { name: 'DDR5 16Gb eTT', cat: 'DRAM', icon: '💾', desc: 'DDR5 16Gb eTT（enhanced Tier Test）等级颗粒，经过增强测试筛选，性价比高，用于对可靠性要求稍低的场景。', usage: '消费级内存条、SSD缓存、显卡显存', share: '消费内存BOM约占3-5%', tags: ['消费电子','SSD','显卡'] },
+    // RDIMM
+    'DDR5 RDIMM 32GB': { name: 'DDR5 RDIMM 32GB', cat: '服务器内存', icon: '🖥️', desc: 'DDR5寄存式内存模组32GB，服务器主流配置。单条32GB可满足大多数虚拟化和数据库场景。', usage: '2路/4路服务器、云主机、虚拟化平台', share: '单台服务器配置4-12条，内存BOM约占25-35%', tags: ['服务器','云计算','虚拟化'] },
+    'DDR5 RDIMM 64GB': { name: 'DDR5 RDIMM 64GB', cat: '服务器内存', icon: '🖥️', desc: 'DDR5寄存式内存模组64GB，大容量服务器内存。用于内存密集型应用如大数据分析、内存数据库。', usage: '大数据服务器、SAP HANA、内存数据库', share: '内存密集型服务器BOM约占30-40%', tags: ['大数据','内存数据库','SAP'] },
+    'DDR5 RDIMM 96GB': { name: 'DDR5 RDIMM 96GB', cat: '服务器内存', icon: '🖥️', desc: 'DDR5寄存式内存模组96GB，超大容量。用于AI训练/推理服务器，配合GPU大显存需求。', usage: 'AI训练服务器、大模型推理、HPC集群', share: 'AI服务器单机内存BOM可达$5,000-15,000', tags: ['AI训练','大模型','HPC'] },
+    // LPDDR5X
+    'LPDDR5X 128Gb': { name: 'LPDDR5X 128Gb', cat: '移动内存', icon: '📱', desc: 'LPDDR5X 128Gb（16GB）低功耗内存颗粒，最高端手机/平板配置。支持旗舰SoC的大内存需求。', usage: '旗舰手机（16GB RAM）、高端平板、AI PC', share: '旗舰手机BOM约占8-12%', tags: ['旗舰手机','平板','AI PC'] },
+    'LPDDR5X 96Gb': { name: 'LPDDR5X 96Gb', cat: '移动内存', icon: '📱', desc: 'LPDDR5X 96Gb（12GB）低功耗内存颗粒，高端手机主流配置。', usage: '高端手机（12GB RAM）、轻薄笔记本', share: '高端手机BOM约占6-10%', tags: ['手机','笔记本'] },
+    'LPDDR5X 64Gb': { name: 'LPDDR5X 64Gb', cat: '移动内存', icon: '📱', desc: 'LPDDR5X 64Gb（8GB）低功耗内存颗粒，中高端手机和轻薄本常用。', usage: '中高端手机（8GB RAM）、Chromebook、IoT网关', share: '中端手机BOM约占5-8%', tags: ['手机','Chromebook','IoT'] },
+    // SSD
+    'PCIe3.0 256GB': { name: 'PCIe 3.0 256GB', cat: 'SSD', icon: '💿', desc: 'PCIe 3.0接口256GB固态硬盘，入门级容量。用于轻薄本出厂标配、瘦客户机、POS终端。', usage: '轻薄本标配、POS终端、瘦客户机、工控机', share: '笔记本BOM约占3-5%', tags: ['笔记本','POS','工控'] },
+    'PCIe3.0 512GB': { name: 'PCIe 3.0 512GB', cat: 'SSD', icon: '💿', desc: 'PCIe 3.0接口512GB固态硬盘，消费级主流容量。性价比高，满足日常办公和娱乐需求。', usage: '主流笔记本、台式机、NAS缓存', share: '笔记本BOM约占4-6%', tags: ['笔记本','台式机','NAS'] },
+    'PCIe3.0 1TB': { name: 'PCIe 3.0 1TB', cat: 'SSD', icon: '💿', desc: 'PCIe 3.0接口1TB固态硬盘，大容量消费级。适合需要大存储空间的用户。', usage: '游戏PC、内容创作者工作站、监控存储', share: '游戏PC BOM约占4-6%', tags: ['游戏PC','创作者','监控'] },
+    'PCIe4.0 512GB': { name: 'PCIe 4.0 512GB', cat: 'SSD', icon: '💿', desc: 'PCIe 4.0接口512GB固态硬盘，新一代高速接口。顺序读取速度可达7000MB/s，是PCIe 3.0的两倍。', usage: '高性能笔记本、PS5扩展、视频剪辑', share: '高端笔记本BOM约占5-7%', tags: ['高性能','PS5','视频剪辑'] },
+    'PCIe4.0 1TB': { name: 'PCIe 4.0 1TB', cat: 'SSD', icon: '💿', desc: 'PCIe 4.0接口1TB固态硬盘，高性能大容量。适合游戏玩家和专业创作者。', usage: '游戏PC、4K/8K视频工作站、数据库缓存', share: '高端PC BOM约占5-8%', tags: ['游戏','视频','数据库'] },
+    'PCIe4.0 2TB': { name: 'PCIe 4.0 2TB', cat: 'SSD', icon: '💿', desc: 'PCIe 4.0接口2TB固态硬盘，超大容量旗舰级。适合对容量和速度都有极致要求的专业场景。', usage: '专业工作站、AI数据集存储、企业级缓存', share: '专业工作站BOM约占8-12%', tags: ['专业工作站','AI','企业'] },
+    // NAND Wafer
+    '1Tb QLC': { name: '1Tb QLC NAND', cat: 'NAND Flash', icon: '🧱', desc: '1Tb QLC（4bit/cell）NAND Flash晶圆，每单元存储4bit，容量密度最高、成本最低。适合大容量存储场景。', usage: '消费级SSD、U盘、SD卡、企业级大容量SSD', share: 'SSD BOM中NAND约占60-70%', tags: ['SSD','U盘','SD卡'] },
+    '1Tb TLC': { name: '1Tb TLC NAND', cat: 'NAND Flash', icon: '🧱', desc: '1Tb TLC（3bit/cell）NAND Flash晶圆，每单元存储3bit，兼顾性能和成本。是当前SSD的主力颗粒。', usage: '主流SSD、企业级SSD、手机存储', share: 'SSD BOM中NAND约占60-70%', tags: ['SSD','手机','企业'] },
+    '512Gb TLC': { name: '512Gb TLC NAND', cat: 'NAND Flash', icon: '🧱', desc: '512Gb TLC NAND Flash晶圆，中等容量颗粒。用于中低容量SSD和嵌入式存储。', usage: '轻薄本SSD、嵌入式eMMC/UFS、汽车存储', share: '嵌入式存储BOM约占15-25%', tags: ['嵌入式','汽车','轻薄本'] },
+    '256Gb TLC': { name: '256Gb TLC NAND', cat: 'NAND Flash', icon: '🧱', desc: '256Gb TLC NAND Flash晶圆，小容量颗粒。用于入门级存储和特殊应用。', usage: '入门SSD、USB闪存盘、IoT设备存储', share: 'IoT设备BOM约占5-10%', tags: ['IoT','USB','入门SSD'] },
 };
+
+function showProductInfo(productKey) {
+    const info = PRODUCT_INFO[productKey];
+    if (!info) return;
+    document.getElementById('prodInfoTitle').innerHTML = info.icon + ' ' + info.name;
+    let html = '';
+    html += '<div class="product-info-section"><div class="product-info-label">分类</div><div class="product-info-value">' + info.cat + '</div></div>';
+    html += '<div class="product-info-section"><div class="product-info-label">简介</div><div class="product-info-value">' + info.desc + '</div></div>';
+    html += '<div class="product-info-section"><div class="product-info-label">主要用途</div><div class="product-info-value">' + info.usage + '</div></div>';
+    html += '<div class="product-info-section"><div class="product-info-label">终端产品BOM占比</div><div class="product-info-value">' + info.share + '</div></div>';
+    if (info.tags) {
+        html += '<div class="product-info-tags">' + info.tags.map(function(t) { return '<span class="product-info-tag">' + t + '</span>'; }).join('') + '</div>';
+    }
+    document.getElementById('prodInfoBody').innerHTML = html;
+    document.getElementById('productInfoModal').classList.add('show');
+}
+
+function closeProductInfo() {
+    document.getElementById('productInfoModal').classList.remove('show');
+}
+
+// 为存储价格表格中的产品名添加点击事件
+function makeStorageProductsClickable() {
+    document.querySelectorAll('.price-table tbody tr').forEach(function(row) {
+        var td = row.querySelector('td:first-child');
+        if (!td) return;
+        var name = td.textContent.trim();
+        // 只对存储芯片区域的产品生效
+        var section = row.closest('.section');
+        if (!section) return;
+        var titleEl = section.querySelector('.section-title');
+        if (!titleEl || !titleEl.textContent.includes('存储')) return;
+        // 匹配产品库（多种格式兼容）
+        var norm = name.replace(/\s+/g,'').replace('SSD(','PCIe').replace(')','').replace(/GB/i,'GB');
+        var matchKey = Object.keys(PRODUCT_INFO).find(function(k) {
+            var kn = k.replace(/\s+/g,'');
+            return name === k || name.includes(k) || k.includes(name) ||
+                   norm === kn || norm.includes(kn) || kn.includes(norm);
+        });
+        if (matchKey) {
+            td.innerHTML = '<span class="product-link" onclick="showProductInfo(\'' + matchKey + '\')">' + name + '</span>';
+            td.style.cursor = 'pointer';
+        }
+    });
+}
+
 </script>
 
 <!-- 阻容感详情弹窗 -->
@@ -1658,6 +1777,17 @@ init = function() {
             <button class="detail-modal-close" onclick="closePassiveDetail()">✕</button>
         </div>
         <div id="detailModalBody"></div>
+    </div>
+</div>
+
+<!-- 产品介绍弹窗 -->
+<div class="product-info-overlay" id="productInfoModal" onclick="if(event.target===this)closeProductInfo()">
+    <div class="product-info-box">
+        <div class="product-info-title">
+            <span id="prodInfoTitle">产品介绍</span>
+            <button class="product-info-close" onclick="closeProductInfo()">✕</button>
+        </div>
+        <div id="prodInfoBody"></div>
     </div>
 </div>
 </body>
