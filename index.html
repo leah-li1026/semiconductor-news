@@ -1720,6 +1720,29 @@ const PRODUCT_INFO = {
     '1Tb TLC': { name: '1Tb TLC NAND', cat: 'NAND Flash', icon: '🧱', desc: '1Tb TLC（3bit/cell）NAND Flash晶圆，每单元存储3bit，兼顾性能和成本。是当前SSD的主力颗粒。', usage: '主流SSD、企业级SSD、手机存储', share: 'SSD BOM中NAND约占60-70%', tags: ['SSD','手机','企业'] },
     '512Gb TLC': { name: '512Gb TLC NAND', cat: 'NAND Flash', icon: '🧱', desc: '512Gb TLC NAND Flash晶圆，中等容量颗粒。用于中低容量SSD和嵌入式存储。', usage: '轻薄本SSD、嵌入式eMMC/UFS、汽车存储', share: '嵌入式存储BOM约占15-25%', tags: ['嵌入式','汽车','轻薄本'] },
     '256Gb TLC': { name: '256Gb TLC NAND', cat: 'NAND Flash', icon: '🧱', desc: '256Gb TLC NAND Flash晶圆，小容量颗粒。用于入门级存储和特殊应用。', usage: '入门SSD、USB闪存盘、IoT设备存储', share: 'IoT设备BOM约占5-10%', tags: ['IoT','USB','入门SSD'] },
+
+    // ===== 阻容感 PCB =====
+    // MLCC 贴片电容
+    '0402 1uF X5R 10V': { name: '0402 1uF X5R 10V', cat: 'MLCC 贴片电容', icon: '⚡', desc: '0402封装（1.0×0.5mm）1微法X5R材质MLCC，最常用的旁路/去耦电容。每部手机用量约500-800颗，每台服务器约2000-5000颗。', usage: '手机主板去耦、服务器电源滤波、IoT模块旁路', share: '手机BOM约占1-2%（$0.5-1.5），服务器BOM约占0.5-1%', tags: ['手机','服务器','IoT','去耦'] },
+    '0201 100nF X5R 16V': { name: '0201 100nF X5R 16V', cat: 'MLCC 贴片电容', icon: '⚡', desc: '0201封装（0.6×0.3mm）100nF超小型MLCC，用于空间极度受限的场景。可穿戴设备和TWS耳机的核心元件。', usage: 'TWS耳机、智能手表、手机射频前端', share: 'TWS耳机BOM约占2-3%（$0.05-0.15/副）', tags: ['TWS','可穿戴','手机'] },
+    '0603 10uF X5R 10V': { name: '0603 10uF X5R 10V', cat: 'MLCC 贴片电容', icon: '⚡', desc: '0603封装（1.6×0.8mm）10微法MLCC，中等容量去耦电容。用于MCU电源旁路和DC-DC输出滤波。', usage: 'MCU电源去耦、DC-DC转换器输出、LED驱动', share: 'IoT模组BOM约占1-2%，工控板约占0.5-1%', tags: ['MCU','DC-DC','LED','工控'] },
+    '0805 22uF X5R 6.3V': { name: '0805 22uF X5R 6.3V', cat: 'MLCC 贴片电容', icon: '⚡', desc: '0805封装（2.0×1.25mm）22微法大容量MLCC，用于电源输出滤波和bulk去耦。AI服务器GPU供电每颗GPU需20-40颗。', usage: 'GPU/CPU供电滤波、服务器VRM、电源模块', share: 'AI服务器BOM中MLCC约占$50-200/台', tags: ['AI服务器','GPU','电源'] },
+
+    // 贴片电阻
+    '0402 10KΩ ±1%': { name: '0402 10KΩ ±1%', cat: '贴片电阻', icon: '🔌', desc: '0402封装10KΩ精密电阻（±1%），最常用的上拉/分压电阻。每部手机用量约300-500颗。', usage: '信号上拉/下拉、I2C/SPI总线、GPIO配置', share: '手机BOM约占0.3-0.5%（$0.1-0.3）', tags: ['手机','上拉','总线'] },
+    '0603 100Ω ±1%': { name: '0603 100Ω ±1%', cat: '贴片电阻', icon: '🔌', desc: '0603封装100Ω电阻，用于信号阻抗匹配和限流。USB/HDMI等高速差分线终端常用。', usage: 'USB终端电阻、HDMI阻抗匹配、LED限流', share: 'PC主板BOM约占0.2-0.4%', tags: ['USB','HDMI','阻抗匹配'] },
+    '0805 4.7KΩ ±1%': { name: '0805 4.7KΩ ±1%', cat: '贴片电阻', icon: '🔌', desc: '0805封装4.7KΩ电阻，I2C总线标准上拉电阻值。也是EN使能引脚的常用上拉。', usage: 'I2C上拉、EN使能、复位电路、JTAG', share: '所有PCB板通用，单板用量5-20颗', tags: ['I2C','复位','通用'] },
+
+    // 贴片电感
+    '0402 1uH ±5%': { name: '0402 1uH ±5%', cat: '贴片电感', icon: '🧲', desc: '0402封装1微亨贴片电感，用于射频匹配和小功率LC滤波。手机射频前端每台约30-60颗。', usage: '手机射频匹配、Wi-Fi天线匹配、EMI滤波', share: '手机BOM约占0.3-0.5%（$0.1-0.4）', tags: ['手机','射频','Wi-Fi'] },
+    '0603 4.7uH ±5%': { name: '0603 4.7uH ±5%', cat: '贴片电感', icon: '🧲', desc: '0603封装4.7微亨电感，用于DC-DC转换器的储能电感和EMI抑制。', usage: 'DC-DC升压/降压、USB PD滤波、音频滤波', share: 'IoT模组BOM约占0.5-1%', tags: ['DC-DC','USB PD','IoT'] },
+    '功率电感 10uH 3A': { name: '功率电感 10uH 3A', cat: '功率电感', icon: '🧲', desc: '大电流功率电感10μH/3A，用于DC-DC转换器主电感。服务器主板每板需4-12颗，笔记本需2-4颗。', usage: '服务器VRM供电、笔记本DC-DC、显卡供电', share: '服务器BOM中电感约占$5-15/台', tags: ['服务器','VRM','显卡'] },
+
+    // PCB 板材
+    'FR-4 双面板 (1.6mm)': { name: 'FR-4 双面板 (1.6mm)', cat: 'PCB 板材', icon: '📋', desc: 'FR-4环氧树脂玻璃布基板，1.6mm厚度双面板。最基础的PCB材料，全球用量最大。', usage: '家电控制板、LED灯板、充电器、简单工控', share: '简单电子产品BOM约占3-8%', tags: ['家电','LED','充电器'] },
+    'FR-4 四层板': { name: 'FR-4 四层板', cat: 'PCB 板材', icon: '📋', desc: 'FR-4四层板，含独立电源层和地层。主流消费电子和通信设备的标准选择。', usage: '手机主板、路由器、交换机、工控主板', share: '手机BOM约占3-5%（$2-5），路由器约占5-8%', tags: ['手机','路由器','工控'] },
+    'HDI板': { name: 'HDI板', cat: 'PCB 板材', icon: '📋', desc: '高密度互连板（HDI），采用微盲孔/埋孔技术。旗舰手机主板标配，层数可达10-16层。', usage: '旗舰手机主板、可穿戴设备、高端服务器', share: '旗舰手机BOM约占5-8%（$3-8）', tags: ['旗舰手机','可穿戴','高端'] },
+    '高频板 (Rogers)': { name: '高频板 (Rogers)', cat: 'PCB 板材', icon: '📋', desc: 'Rogers等高频材料PCB，介电常数稳定、损耗极低。5G基站和毫米波雷达的必选材料。', usage: '5G基站天线、毫米波雷达、卫星通信、射频前端', share: '5G基站BOM中PCB约占8-15%（$200-500/站）', tags: ['5G','雷达','卫星','射频'] },
 };
 
 function showProductInfo(productKey) {
@@ -1742,24 +1765,27 @@ function closeProductInfo() {
     document.getElementById('productInfoModal').classList.remove('show');
 }
 
-// 为存储价格表格中的产品名添加点击事件
+// 为价格表格中的产品名添加点击事件（存储+阻容感）
 function makeStorageProductsClickable() {
     document.querySelectorAll('.price-table tbody tr').forEach(function(row) {
         var td = row.querySelector('td:first-child');
         if (!td) return;
         var name = td.textContent.trim();
-        // 只对存储芯片区域的产品生效
-        var section = row.closest('.section');
-        if (!section) return;
-        var titleEl = section.querySelector('.section-title');
-        if (!titleEl || !titleEl.textContent.includes('存储')) return;
-        // 匹配产品库（多种格式兼容）
-        var norm = name.replace(/\s+/g,'').replace('SSD(','PCIe').replace(')','').replace(/GB/i,'GB');
-        var matchKey = Object.keys(PRODUCT_INFO).find(function(k) {
-            var kn = k.replace(/\s+/g,'');
-            return name === k || name.includes(k) || k.includes(name) ||
-                   norm === kn || norm.includes(kn) || kn.includes(norm);
-        });
+        if (td.querySelector('.product-link')) return; // 已处理
+        // 匹配产品库（精确匹配优先）
+        var matchKey = null;
+        // 精确匹配
+        if (PRODUCT_INFO[name]) {
+            matchKey = name;
+        } else {
+            // 模糊匹配
+            var norm = name.replace(/\s+/g,'').replace('SSD(','PCIe').replace(')','').replace(/GB/i,'GB');
+            matchKey = Object.keys(PRODUCT_INFO).find(function(k) {
+                var kn = k.replace(/\s+/g,'');
+                return name.includes(k) || k.includes(name) ||
+                       norm === kn || norm.includes(kn) || kn.includes(norm);
+            });
+        }
         if (matchKey) {
             td.innerHTML = '<span class="product-link" onclick="showProductInfo(\'' + matchKey + '\')">' + name + '</span>';
             td.style.cursor = 'pointer';
