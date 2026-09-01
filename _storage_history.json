@@ -1,0 +1,386 @@
+{
+  "2026-07-07": {
+    "dram": {
+      "DDR4 16Gb 3200": 50.0,
+      "DDR4 8Gb 3200": 18.0,
+      "DDR4 8Gb eTT": 7.8,
+      "DDR5 24Gb Major": 40.0,
+      "DDR5 16Gb Major": 35.0,
+      "DDR5 16Gb eTT": 22.5
+    },
+    "rdimm": {
+      "DDR5 RDIMM 32GB": 730.0,
+      "DDR5 RDIMM 64GB": 1380.0,
+      "DDR5 RDIMM 96GB": 2310.0
+    },
+    "lpddr": {
+      "LPDDR5X 128Gb": 235.0,
+      "LPDDR5X 96Gb": 175.0,
+      "LPDDR5X 64Gb": 114.0,
+      "LPDDR5X 48Gb": 88.0,
+      "LPDDR5X 32Gb": 61.0
+    },
+    "enterprise_ssd": {
+      "PCIe3.0 256GB": 75.0,
+      "PCIe3.0 512GB": 128.0,
+      "PCIe3.0 1TB": 200.0,
+      "PCIe4.0 512GB": 142.0,
+      "PCIe4.0 1TB": 230.0,
+      "PCIe4.0 2TB": 400.0
+    },
+    "consumer_ssd": {
+      "PCIe3.0 256GB": 75.0,
+      "PCIe3.0 512GB": 128.0,
+      "PCIe3.0 1TB": 200.0,
+      "PCIe4.0 512GB": 142.0,
+      "PCIe4.0 1TB": 230.0,
+      "PCIe4.0 2TB": 400.0
+    },
+    "nand_wafer": {
+      "1Tb QLC": 26.5,
+      "1Tb TLC": 29.0,
+      "512Gb TLC": 22.5,
+      "256Gb TLC": 11.0
+    }
+  },
+  "2026-07-13": {
+    "dram": {
+      "DDR4 16Gb 3200": 50.0,
+      "DDR4 8Gb 3200": 18.0,
+      "DDR4 8Gb eTT": 7.8,
+      "DDR5 24Gb Major": 40.0,
+      "DDR5 16Gb Major": 35.0,
+      "DDR5 16Gb eTT": 22.5
+    },
+    "rdimm": {
+      "DDR5 RDIMM 32GB": 730.0,
+      "DDR5 RDIMM 64GB": 1380.0,
+      "DDR5 RDIMM 96GB": 2310.0
+    },
+    "lpddr": {
+      "LPDDR5X 128Gb": 235.0,
+      "LPDDR5X 96Gb": 175.0,
+      "LPDDR5X 64Gb": 114.0,
+      "LPDDR5X 48Gb": 88.0,
+      "LPDDR5X 32Gb": 61.0
+    },
+    "enterprise_ssd": {
+      "PCIe3.0 256GB": 75.0,
+      "PCIe3.0 512GB": 128.0,
+      "PCIe3.0 1TB": 200.0,
+      "PCIe4.0 512GB": 142.0,
+      "PCIe4.0 1TB": 230.0,
+      "PCIe4.0 2TB": 400.0
+    },
+    "consumer_ssd": {
+      "PCIe3.0 256GB": 75.0,
+      "PCIe3.0 512GB": 128.0,
+      "PCIe3.0 1TB": 200.0,
+      "PCIe4.0 512GB": 142.0,
+      "PCIe4.0 1TB": 230.0,
+      "PCIe4.0 2TB": 400.0
+    },
+    "nand_wafer": {
+      "1Tb QLC": 26.5,
+      "1Tb TLC": 29.0,
+      "512Gb TLC": 22.5,
+      "256Gb TLC": 11.0
+    }
+  },
+  "2026-07-20": {
+    "dram": {
+      "DDR4 16Gb 3200": 50.0,
+      "DDR4 8Gb 3200": 18.0,
+      "DDR4 8Gb eTT": 7.8,
+      "DDR5 24Gb Major": 40.0,
+      "DDR5 16Gb Major": 35.0,
+      "DDR5 16Gb eTT": 22.5
+    },
+    "rdimm": {
+      "DDR5 RDIMM 32GB": 730.0,
+      "DDR5 RDIMM 64GB": 1380.0,
+      "DDR5 RDIMM 96GB": 2310.0
+    },
+    "lpddr": {
+      "LPDDR5X 128Gb": 235.0,
+      "LPDDR5X 96Gb": 175.0,
+      "LPDDR5X 64Gb": 114.0,
+      "LPDDR5X 48Gb": 88.0,
+      "LPDDR5X 32Gb": 61.0
+    },
+    "enterprise_ssd": {
+      "PCIe3.0 256GB": 75.0,
+      "PCIe3.0 512GB": 128.0,
+      "PCIe3.0 1TB": 200.0,
+      "PCIe4.0 512GB": 142.0,
+      "PCIe4.0 1TB": 230.0,
+      "PCIe4.0 2TB": 400.0
+    },
+    "consumer_ssd": {
+      "PCIe3.0 256GB": 75.0,
+      "PCIe3.0 512GB": 128.0,
+      "PCIe3.0 1TB": 200.0,
+      "PCIe4.0 512GB": 142.0,
+      "PCIe4.0 1TB": 230.0,
+      "PCIe4.0 2TB": 400.0
+    },
+    "nand_wafer": {
+      "1Tb QLC": 26.5,
+      "1Tb TLC": 29.0,
+      "512Gb TLC": 22.5,
+      "256Gb TLC": 11.0
+    }
+  },
+  "2026-07-27": {
+    "dram": {
+      "DDR4 16Gb 3200": 50.0,
+      "DDR4 8Gb 3200": 18.0,
+      "DDR4 8Gb eTT": 7.8,
+      "DDR5 24Gb Major": 40.0,
+      "DDR5 16Gb Major": 35.0,
+      "DDR5 16Gb eTT": 22.5
+    },
+    "rdimm": {
+      "DDR5 RDIMM 32GB": 730.0,
+      "DDR5 RDIMM 64GB": 1380.0,
+      "DDR5 RDIMM 96GB": 2310.0
+    },
+    "lpddr": {
+      "LPDDR5X 128Gb": 235.0,
+      "LPDDR5X 96Gb": 175.0,
+      "LPDDR5X 64Gb": 114.0,
+      "LPDDR5X 48Gb": 88.0,
+      "LPDDR5X 32Gb": 61.0
+    },
+    "enterprise_ssd": {
+      "PCIe3.0 256GB": 75.0,
+      "PCIe3.0 512GB": 128.0,
+      "PCIe3.0 1TB": 200.0,
+      "PCIe4.0 512GB": 142.0,
+      "PCIe4.0 1TB": 230.0,
+      "PCIe4.0 2TB": 400.0
+    },
+    "consumer_ssd": {
+      "PCIe3.0 256GB": 75.0,
+      "PCIe3.0 512GB": 128.0,
+      "PCIe3.0 1TB": 200.0,
+      "PCIe4.0 512GB": 142.0,
+      "PCIe4.0 1TB": 230.0,
+      "PCIe4.0 2TB": 400.0
+    },
+    "nand_wafer": {
+      "1Tb QLC": 26.5,
+      "1Tb TLC": 29.0,
+      "512Gb TLC": 22.5,
+      "256Gb TLC": 11.0
+    }
+  },
+  "2026-08-03": {
+    "dram": {
+      "DDR4 16Gb 3200": 50.0,
+      "DDR4 8Gb 3200": 18.0,
+      "DDR4 8Gb eTT": 7.8,
+      "DDR5 24Gb Major": 40.0,
+      "DDR5 16Gb Major": 35.0,
+      "DDR5 16Gb eTT": 22.5
+    },
+    "rdimm": {
+      "DDR5 RDIMM 32GB": 730.0,
+      "DDR5 RDIMM 64GB": 1380.0,
+      "DDR5 RDIMM 96GB": 2310.0
+    },
+    "lpddr": {
+      "LPDDR5X 128Gb": 235.0,
+      "LPDDR5X 96Gb": 175.0,
+      "LPDDR5X 64Gb": 114.0,
+      "LPDDR5X 48Gb": 88.0,
+      "LPDDR5X 32Gb": 61.0
+    },
+    "enterprise_ssd": {
+      "PCIe3.0 256GB": 75.0,
+      "PCIe3.0 512GB": 128.0,
+      "PCIe3.0 1TB": 200.0,
+      "PCIe4.0 512GB": 142.0,
+      "PCIe4.0 1TB": 230.0,
+      "PCIe4.0 2TB": 400.0
+    },
+    "consumer_ssd": {
+      "PCIe3.0 256GB": 75.0,
+      "PCIe3.0 512GB": 128.0,
+      "PCIe3.0 1TB": 200.0,
+      "PCIe4.0 512GB": 142.0,
+      "PCIe4.0 1TB": 230.0,
+      "PCIe4.0 2TB": 400.0
+    },
+    "nand_wafer": {
+      "1Tb QLC": 26.5,
+      "1Tb TLC": 29.0,
+      "512Gb TLC": 22.5,
+      "256Gb TLC": 11.0
+    }
+  },
+  "2026-08-10": {
+    "dram": {
+      "DDR4 16Gb 3200": 50.0,
+      "DDR4 8Gb 3200": 22.0,
+      "DDR5 24Gb Major": 48.0,
+      "DDR5 16Gb Major": 40.0,
+      "DDR5 16Gb eTT": 23.0
+    },
+    "rdimm": {
+      "DDR5 RDIMM 32GB": 900.0,
+      "DDR5 RDIMM 64GB": 1590.0,
+      "DDR5 RDIMM 96GB": 2650.0
+    },
+    "lpddr": {
+      "LPDDR5X 128Gb": 235.0,
+      "LPDDR5X 96Gb": 175.0,
+      "LPDDR5X 64Gb": 114.0
+    },
+    "enterprise_ssd": {
+      "PCIe3.0 256GB": 75.0,
+      "PCIe3.0 512GB": 128.0,
+      "PCIe3.0 1TB": 200.0,
+      "PCIe4.0 512GB": 142.0,
+      "PCIe4.0 1TB": 230.0,
+      "PCIe4.0 2TB": 400.0
+    },
+    "consumer_ssd": {
+      "PCIe3.0 256GB": 75.0,
+      "PCIe3.0 512GB": 128.0,
+      "PCIe3.0 1TB": 200.0,
+      "PCIe4.0 512GB": 142.0,
+      "PCIe4.0 1TB": 230.0,
+      "PCIe4.0 2TB": 400.0
+    },
+    "nand_wafer": {
+      "1Tb QLC": 26.5,
+      "1Tb TLC": 29.0,
+      "512Gb TLC": 22.5,
+      "256Gb TLC": 11.0
+    }
+  },
+  "2026-08-17": {
+    "dram": {
+      "DDR4 16Gb 3200": 50.0,
+      "DDR4 8Gb 3200": 22.0,
+      "DDR5 24Gb Major": 48.0,
+      "DDR5 16Gb Major": 40.0,
+      "DDR5 16Gb eTT": 23.0
+    },
+    "rdimm": {
+      "DDR5 RDIMM 32GB": 900.0,
+      "DDR5 RDIMM 64GB": 1590.0,
+      "DDR5 RDIMM 96GB": 2650.0
+    },
+    "lpddr": {
+      "LPDDR5X 128Gb": 235.0,
+      "LPDDR5X 96Gb": 175.0,
+      "LPDDR5X 64Gb": 114.0
+    },
+    "enterprise_ssd": {
+      "PCIe3.0 256GB": 75.0,
+      "PCIe3.0 512GB": 128.0,
+      "PCIe3.0 1TB": 200.0,
+      "PCIe4.0 512GB": 142.0,
+      "PCIe4.0 1TB": 230.0,
+      "PCIe4.0 2TB": 400.0
+    },
+    "consumer_ssd": {
+      "PCIe3.0 256GB": 75.0,
+      "PCIe3.0 512GB": 128.0,
+      "PCIe3.0 1TB": 200.0,
+      "PCIe4.0 512GB": 142.0,
+      "PCIe4.0 1TB": 230.0,
+      "PCIe4.0 2TB": 400.0
+    },
+    "nand_wafer": {
+      "1Tb QLC": 26.5,
+      "1Tb TLC": 29.0,
+      "512Gb TLC": 22.5,
+      "256Gb TLC": 11.0
+    }
+  },
+  "2026-08-24": {
+    "dram": {
+      "DDR4 16Gb 3200": 50.0,
+      "DDR4 8Gb 3200": 22.0,
+      "DDR5 24Gb Major": 48.0,
+      "DDR5 16Gb Major": 40.0,
+      "DDR5 16Gb eTT": 24.4
+    },
+    "rdimm": {
+      "DDR5 RDIMM 32GB": 900.0,
+      "DDR5 RDIMM 64GB": 1590.0,
+      "DDR5 RDIMM 96GB": 2650.0
+    },
+    "lpddr": {
+      "LPDDR5X 128Gb": 235.0,
+      "LPDDR5X 96Gb": 175.0,
+      "LPDDR5X 64Gb": 114.0
+    },
+    "enterprise_ssd": {
+      "PCIe3.0 256GB": 75.0,
+      "PCIe3.0 512GB": 128.0,
+      "PCIe3.0 1TB": 200.0,
+      "PCIe4.0 512GB": 142.0,
+      "PCIe4.0 1TB": 230.0,
+      "PCIe4.0 2TB": 400.0
+    },
+    "consumer_ssd": {
+      "PCIe3.0 256GB": 75.0,
+      "PCIe3.0 512GB": 128.0,
+      "PCIe3.0 1TB": 200.0,
+      "PCIe4.0 512GB": 142.0,
+      "PCIe4.0 1TB": 230.0,
+      "PCIe4.0 2TB": 400.0
+    },
+    "nand_wafer": {
+      "1Tb QLC": 26.5,
+      "1Tb TLC": 29.0,
+      "512Gb TLC": 22.5,
+      "256Gb TLC": 11.0
+    }
+  },
+  "2026-08-31": {
+    "dram": {
+      "DDR4 16Gb 3200": 50.0,
+      "DDR4 8Gb 3200": 22.0,
+      "DDR5 24Gb Major": 48.0,
+      "DDR5 16Gb Major": 40.0,
+      "DDR5 16Gb eTT": 24.4
+    },
+    "rdimm": {
+      "DDR5 RDIMM 32GB": 900.0,
+      "DDR5 RDIMM 64GB": 1590.0,
+      "DDR5 RDIMM 96GB": 2650.0
+    },
+    "lpddr": {
+      "LPDDR5X 128Gb": 235.0,
+      "LPDDR5X 96Gb": 175.0,
+      "LPDDR5X 64Gb": 114.0
+    },
+    "enterprise_ssd": {
+      "PCIe3.0 256GB": 75.0,
+      "PCIe3.0 512GB": 128.0,
+      "PCIe3.0 1TB": 200.0,
+      "PCIe4.0 512GB": 142.0,
+      "PCIe4.0 1TB": 230.0,
+      "PCIe4.0 2TB": 400.0
+    },
+    "consumer_ssd": {
+      "PCIe3.0 256GB": 75.0,
+      "PCIe3.0 512GB": 128.0,
+      "PCIe3.0 1TB": 200.0,
+      "PCIe4.0 512GB": 142.0,
+      "PCIe4.0 1TB": 230.0,
+      "PCIe4.0 2TB": 400.0
+    },
+    "nand_wafer": {
+      "1Tb QLC": 26.5,
+      "1Tb TLC": 29.0,
+      "512Gb TLC": 22.5,
+      "256Gb TLC": 11.0
+    }
+  }
+}

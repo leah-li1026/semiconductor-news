@@ -525,6 +525,7 @@
                         <tr><td>PCIe 4.0 2TB</td><td>$400.00</td><td class="price-flat">持平</td></tr>
                     </tbody>
                 </table>
+                <div class="chart-container"><canvas id="essdChart"></canvas></div>
             </div>
 
             <!-- 消费级SSD -->
@@ -547,6 +548,7 @@
                         <tr><td>SSD(PCIe 4.0) 2TB</td><td>$400.00</td><td class="price-flat">持平</td></tr>
                     </tbody>
                 </table>
+                <div class="chart-container"><canvas id="cssdChart"></canvas></div>
             </div>
 
             <!-- LPDDR5X -->
@@ -586,6 +588,7 @@
                         <tr><td>256Gb TLC</td><td>$11.00</td><td class="price-flat">持平</td></tr>
                     </tbody>
                 </table>
+                <div class="chart-container"><canvas id="nandChart"></canvas></div>
             </div>
         </div>
 
@@ -1117,60 +1120,138 @@ function setDate() {
 }
 
 // ===== Charts =====
-function initCharts() {
+// 存储芯片图表颜色
+const STORAGE_COLORS = ['#3b82f6','#8b5cf6','#f472b6','#fb923c','#4ade80','#06b6d4','#eab308','#ef4444'];
+let storageHistoryData = null;
+
+async function initCharts() {
     Chart.defaults.color = '#64748b';
     Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
     Chart.defaults.font.family = '-apple-system, PingFang SC, Microsoft YaHei, sans-serif';
 
-    // DRAM Price Chart (weekly: 7/7 ~ 8/31)
-    new Chart(document.getElementById('dramChart'), {
-        type: 'line',
-        data: {
-            labels: ['7/7','7/13','7/20','7/27','8/3','8/10','8/17','8/24','8/31'],
-            datasets: [
-                { label: 'DDR5 16Gb', data: [35,35,35,35,35,40,40,40,40], borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.4, pointRadius: 3 },
-                { label: 'DDR4 8Gb', data: [18,18,18,18,18,22,22,22,22], borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.1)', fill: true, tension: 0.4, pointRadius: 3 }
-            ]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { position: 'top', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } } },
-            scales: { y: { grid: { color: 'rgba(255,255,255,0.03)' } }, x: { grid: { display: false } } }
-        }
-    });
+    // 加载存储历史数据
+    try {
+        const resp = await fetch('_storage_history.json?' + Date.now());
+        if (resp.ok) storageHistoryData = await resp.json();
+    } catch (e) { console.log('storage history load failed:', e); }
 
-    // RDIMM Price Chart (weekly: 7/7 ~ 8/31)
-    new Chart(document.getElementById('rdimmChart'), {
-        type: 'bar',
-        data: {
-            labels: ['7/7','7/13','7/20','7/27','8/3','8/10','8/17','8/24','8/31'],
-            datasets: [
-                { label: '32GB', data: [730,730,730,730,730,900,900,900,900], backgroundColor: 'rgba(59,130,246,0.6)', borderRadius: 4 },
-                { label: '64GB', data: [1380,1380,1380,1380,1380,1590,1590,1590,1590], backgroundColor: 'rgba(139,92,246,0.6)', borderRadius: 4 },
-                { label: '96GB', data: [2310,2310,2310,2310,2310,2650,2650,2650,2650], backgroundColor: 'rgba(244,114,182,0.6)', borderRadius: 4 }
-            ]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { position: 'top', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } } },
-            scales: { y: { grid: { color: 'rgba(255,255,255,0.03)' } }, x: { grid: { display: false } } }
-        }
-    });
+    if (!storageHistoryData) return;
 
-    // LPDDR5X Price Chart (weekly: 7/7 ~ 8/31)
-    new Chart(document.getElementById('lpddrChart'), {
-        type: 'line',
-        data: {
-            labels: ['7/7','7/13','7/20','7/27','8/3','8/10','8/17','8/24','8/31'],
-            datasets: [
-                { label: '128Gb', data: [235,235,235,235,235,235,235,235,235], borderColor: '#f472b6', backgroundColor: 'rgba(244,114,182,0.1)', fill: true, tension: 0.4, pointRadius: 3 },
-                { label: '64Gb', data: [114,114,114,114,114,114,114,114,114], borderColor: '#fb923c', backgroundColor: 'rgba(251,146,60,0.1)', fill: true, tension: 0.4, pointRadius: 3 }
-            ]
-        },
+    const dates = Object.keys(storageHistoryData).sort();
+    const labels = dates.map(d => d.substring(5));
+
+    // DRAM 现货价 - 折线图
+    renderStorageChart('dramChart', 'line', dates, labels, storageHistoryData, 'dram',
+        ['DDR5 16Gb Major','DDR5 24Gb Major','DDR4 8Gb 3200','DDR4 16Gb 3200','DDR5 16Gb eTT']);
+
+    // DDR5 RDIMM 合约价 - 柱状图
+    renderStorageChart('rdimmChart', 'bar', dates, labels, storageHistoryData, 'rdimm',
+        ['DDR5 RDIMM 32GB','DDR5 RDIMM 64GB','DDR5 RDIMM 96GB']);
+
+    // LPDDR5X - 折线图
+    renderStorageChart('lpddrChart', 'line', dates, labels, storageHistoryData, 'lpddr',
+        ['LPDDR5X 128Gb','LPDDR5X 96Gb','LPDDR5X 64Gb']);
+
+    // 企业级SSD - 折线图
+    renderStorageChart('essdChart', 'line', dates, labels, storageHistoryData, 'enterprise_ssd',
+        ['PCIe4.0 2TB','PCIe4.0 1TB','PCIe3.0 1TB','PCIe4.0 512GB','PCIe3.0 512GB','PCIe3.0 256GB']);
+
+    // 消费级SSD - 折线图
+    renderStorageChart('cssdChart', 'line', dates, labels, storageHistoryData, 'consumer_ssd',
+        ['PCIe4.0 2TB','PCIe4.0 1TB','PCIe3.0 1TB','PCIe4.0 512GB','PCIe3.0 512GB','PCIe3.0 256GB']);
+
+    // NAND Wafer - 折线图
+    renderStorageChart('nandChart', 'line', dates, labels, storageHistoryData, 'nand_wafer',
+        ['1Tb TLC','1Tb QLC','512Gb TLC','256Gb TLC']);
+}
+
+function renderStorageChart(canvasId, chartType, dates, labels, allData, category, productOrder) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    // 收集该品类所有产品的价格序列
+    const allPrices = [];
+    const datasets = [];
+    let ci = 0;
+
+    for (const product of productOrder) {
+        const priceData = [];
+        for (const date of dates) {
+            const val = (allData[date] || {})[category]?.[product];
+            priceData.push(val ?? null);
+            if (val != null) allPrices.push(val);
+        }
+        // 跳过全空的产品
+        if (priceData.every(v => v == null)) continue;
+
+        const color = STORAGE_COLORS[ci % STORAGE_COLORS.length];
+        const ds = {
+            label: product,
+            data: priceData,
+            borderColor: color,
+            tension: 0.35,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            borderWidth: 2
+        };
+        if (chartType === 'line') {
+            ds.backgroundColor = color + '1a';
+            ds.fill = false;
+        } else {
+            ds.backgroundColor = color + '99';
+            ds.borderRadius = 4;
+        }
+        datasets.push(ds);
+        ci++;
+    }
+
+    if (!datasets.length) return;
+
+    const maxP = allPrices.length ? Math.max(...allPrices) : 100;
+    const dec = maxP >= 100 ? 0 : maxP >= 10 ? 1 : 2;
+
+    new Chart(canvas, {
+        type: chartType,
+        data: { labels, datasets },
         options: {
             responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { position: 'top', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } } },
-            scales: { y: { grid: { color: 'rgba(255,255,255,0.03)' } }, x: { grid: { display: false } } }
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: { boxWidth: 10, padding: 6, font: { size: 10 }, usePointStyle: true }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15,22,41,0.95)', titleColor: '#e2e8f0', bodyColor: '#94a3b8',
+                    borderColor: '#334155', borderWidth: 1, padding: 10, cornerRadius: 8,
+                    callbacks: {
+                        label: function(ctx) {
+                            const v = ctx.parsed.y;
+                            if (v == null) return ctx.dataset.label + ': —';
+                            let txt = ctx.dataset.label + ': $' + v.toFixed(dec);
+                            const idx = ctx.dataIndex;
+                            if (idx > 0) {
+                                const prev = ctx.dataset.data[idx - 1];
+                                if (prev != null && prev > 0) {
+                                    const pct = (v - prev) / prev * 100;
+                                    if (Math.abs(pct) >= 0.01) {
+                                        const sign = pct >= 0 ? '+' : '';
+                                        txt += ` (${sign}${pct.toFixed(1)}%)`;
+                                    }
+                                }
+                            }
+                            return txt;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    grid: { color: 'rgba(255,255,255,0.03)' },
+                    ticks: { callback: function(v) { return '$' + (maxP >= 100 ? v.toFixed(0) : v.toFixed(dec)); } }
+                },
+                x: { grid: { display: false } }
+            }
         }
     });
 }
