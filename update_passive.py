@@ -165,10 +165,16 @@ def manual_input(history):
 
 
 def append_to_history(history, results, today):
-    """将新价格追加到历史"""
+    """将新价格追加到历史，仅在抓取覆盖率足够时更新 last_update"""
+    updated_brands = 0
+    total_brands = 0
+
     for cat_name, cat_data in history.get('categories', {}).items():
+        if cat_name == 'PCB':
+            continue
         for item_name, item_data in cat_data.get('items', {}).items():
             for brand_name, brand_data in item_data.get('brands', {}).items():
+                total_brands += 1
                 if item_name in results and brand_name in results[item_name]:
                     new_price = results[item_name][brand_name]
                     hist = brand_data.get('history', [])
@@ -196,8 +202,16 @@ def append_to_history(history, results, today):
                     else:
                         hist.append({'date': today, 'price': new_price, 'trend': trend})
                     brand_data['history'] = hist
+                    updated_brands += 1
 
-    history['last_update'] = today
+    # 仅在抓取覆盖率 >= 50% 时更新 last_update，避免部分抓取导致数据不一致
+    coverage = updated_brands / total_brands * 100 if total_brands > 0 else 0
+    if coverage >= 50:
+        history['last_update'] = today
+        print(f"  ✅ last_update 已更新 ({updated_brands}/{total_brands} = {coverage:.0f}% 覆盖)")
+    else:
+        print(f"  ⚠️ 抓取不完整 ({updated_brands}/{total_brands} = {coverage:.0f}%)，保留原 last_update: {history.get('last_update')}")
+
     return history
 
 
