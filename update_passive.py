@@ -21,12 +21,22 @@ from pathlib import Path
 if __name__ == '__main__':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
+import time
+import random
+
 try:
     from selenium import webdriver
     from selenium.webdriver.chrome.options import Options
     HAS_SELENIUM = True
 except ImportError:
     HAS_SELENIUM = False
+
+USER_AGENTS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0',
+]
 
 SCRIPT_DIR = Path(__file__).parent
 HISTORY_FILE = SCRIPT_DIR / 'passive_history.json'
@@ -46,47 +56,69 @@ def save_history(data):
     print("  [OK] History saved")
 
 
-def scrape_lcsc(driver, keyword):
-    """搜索立创商城，返回价格"""
-    import time
-    driver.get(f'https://so.szlcsc.com/global.html?k={keyword}')
-    time.sleep(6)
+def scrape_lcsc(driver, keyword, max_retries=3):
+    """搜索立创商城，返回价格（带重试机制）"""
+    for attempt in range(max_retries):
+        try:
+            driver.get(f'https://so.szlcsc.com/global.html?k={keyword}')
+            time.sleep(5 + random.uniform(1, 3))
 
-    page = driver.page_source
-    if '完成验证' in page or '安全验证' in page:
-        return None, None, 'CAPTCHA'
+            page = driver.page_source
+            if '完成验证' in page or '安全验证' in page:
+                print(f"      ⚠️ 验证码拦截 (尝试 {attempt+1}/{max_retries})")
+                # 清除cookies重试
+                driver.delete_all_cookies()
+                time.sleep(3 + random.uniform(2, 5))
+                continue
 
-    links = re.findall(r'item\.szlcsc\.com/(\d+)\.html', page)
-    if not links:
-        return None, None, 'no_results'
+            links = re.findall(r'item\.szlcsc\.com/(\d+)\.html', page)
+            if not links:
+                return None, None, 'no_results'
 
-    pid = links[0]
-    driver.get(f'https://item.szlcsc.com/{pid}.html')
-    time.sleep(4)
+            pid = links[0]
+            driver.get(f'https://item.szlcsc.com/{pid}.html')
+            time.sleep(3 + random.uniform(1, 2))
 
-    page = driver.page_source
-    prices = re.findall(r'"price"\s*:\s*"?(\d+\.?\d*)"?', page)
-    brand = re.search(r'"brand"[^}]*"name"\s*:\s*"([^"]+)"', page)
+            page = driver.page_source
+            prices = re.findall(r'"price"\s*:\s*"?(\d+\.?\d*)"?', page)
+            brand = re.search(r'"brand"[^}]*"name"\s*:\s*"([^"]+)"', page)
 
-    if prices:
-        return float(prices[0]), brand.group(1) if brand else None, None
-    return None, None, 'no_price'
+            if prices:
+                return float(prices[0]), brand.group(1) if brand else None, None
+            return None, None, 'no_price'
+        except Exception as e:
+            print(f"      ❌ 异常 (尝试 {attempt+1}/{max_retries}): {e}")
+            if attempt < max_retries - 1:
+                time.sleep(5 + random.uniform(3, 7))
+                continue
+            return None, None, f'error: {e}'
+    return None, None, 'CAPTCHA_max_retries'
 
 
 def scrape_all(history):
-    """按品牌抓取所有物料"""
+    """按品牌抓取所有物料（带UA轮换和随机间隔）"""
     if not HAS_SELENIUM:
         print("  [WARN] Selenium not installed")
-        return {}
+        return {}, 0
 
     options = Options()
     options.add_argument('--headless=new')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
+    options.add_argument(f'--user-agent={random.choice(USER_AGENTS)}')
+    # 降低自动化检测风险
+    options.add_argument('--disable-blink-features=AutomationControlled')
 
     driver = webdriver.Chrome(options=options)
+    # 隐藏 webdriver 特征
+    driver.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument', {
+        'source': 'Object.defineProperty(navigator, "webdriver", {get: () => undefined})'
+    })
+
     results = {}
     scraped = 0
+    captcha_count = 0
+    max_captcha = 5  # 连续验证码超过此数则提前终止
 
     try:
         for cat_name, cat_data in history.get('categories', {}).items():
@@ -104,9 +136,18 @@ def scrape_all(history):
                             results[item_name] = {}
                         results[item_name][brand_name] = price
                         scraped += 1
+                        captcha_count = 0
                         print(f"    {item_name} [{brand_name}]: CNY{price}")
                     else:
                         print(f"    {item_name} [{brand_name}]: {err}")
+                        if 'CAPTCHA' in str(err):
+                            captcha_count += 1
+                            if captcha_count >= max_captcha:
+                                print(f"\n  ⚠️ 连续验证码拦截 {captcha_count} 次，提前终止抓取")
+                                return results, scraped
+
+                    # 请求间随机间隔
+                    time.sleep(2 + random.uniform(1, 3))
     finally:
         driver.quit()
 
@@ -250,8 +291,10 @@ def show_history(history):
     print()
 
 
-def update_html(history, today):
-    """更新 index.html 中的阻容感表格"""
+def update_html(history, data_date):
+    """更新 index.html 中的阻容感表格
+    data_date: 实际数据日期（只在有新数据时才更新HTML中的日期）
+    """
     if not HTML_FILE.exists():
         return
 
@@ -327,10 +370,12 @@ def update_html(history, today):
         if match:
             html = html[:match.start(2)] + '\n                        ' + rows_html + '\n                    ' + html[match.end(2):]
 
-        date_pattern = re.compile(
-            r'(<div class="price-card-title">' + escaped_label + r'</div>\s*<div class="price-card-sub"[^>]*>)更新日期：[\d-]+'
-        )
-        html = date_pattern.sub(r'\1更新日期：' + today, html)
+        # 仅在有实际数据日期时更新HTML日期（避免无数据时虚假更新日期）
+        if data_date:
+            date_pattern = re.compile(
+                r'(<div class="price-card-title">' + escaped_label + r'</div>\s*<div class="price-card-sub"[^>]*>)更新日期：[\d-]+'
+            )
+            html = date_pattern.sub(r'\1更新日期：' + data_date, html)
 
     with open(HTML_FILE, 'w', encoding='utf-8') as f:
         f.write(html)
@@ -372,9 +417,16 @@ def main():
 
     history = append_to_history(history, results, today)
     save_history(history)
-    update_html(history, today)
 
-    print(f"\nDone!")
+    # 只在有实际新数据（coverage >= 50%）时才更新HTML日期
+    data_date = history.get('last_update', '')
+    if data_date == today:
+        update_html(history, today)
+        print(f"\n✅ 更新完成！日期: {today}")
+    else:
+        # 抓取不完整，保留原日期，只刷新表格数据（不改日期）
+        update_html(history, None)
+        print(f"\n⚠️ 抓取不完整，HTML日期未更新，保留: {data_date}")
 
 
 if __name__ == '__main__':

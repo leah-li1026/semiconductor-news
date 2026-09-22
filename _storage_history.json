@@ -448,5 +448,38 @@
       "512Gb TLC": 22.0,
       "256Gb TLC": 11.0
     }
+  },
+  "2026-09-22": {
+    "dram": {
+      "DDR4 16Gb 3200": 50.0,
+      "DDR4 8Gb 3200": 22.0,
+      "DDR5 24Gb Major": 55.0,
+      "DDR5 16Gb Major": 45.0,
+      "DDR5 16Gb eTT": 26.0
+    },
+    "rdimm": {
+      "DDR5 RDIMM 32GB": 930,
+      "DDR5 RDIMM 64GB": 1630,
+      "DDR5 RDIMM 96GB": 2650
+    },
+    "lpddr": {
+      "LPDDR5X 128Gb": 235.0,
+      "LPDDR5X 96Gb": 175.0,
+      "LPDDR5X 64Gb": 114.0
+    },
+    "consumer_ssd": {
+      "PCIe3.0 256GB": 38.0,
+      "PCIe3.0 512GB": 75.0,
+      "PCIe3.0 1TB": 116.0,
+      "PCIe4.0 512GB": 80.0,
+      "PCIe4.0 1TB": 130.0,
+      "PCIe4.0 2TB": 250.0
+    },
+    "nand_wafer": {
+      "1Tb QLC": 26.0,
+      "1Tb TLC": 29.0,
+      "512Gb TLC": 22.0,
+      "256Gb TLC": 11.0
+    }
   }
 }

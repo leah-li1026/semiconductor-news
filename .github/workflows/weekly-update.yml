@@ -2,16 +2,31 @@ name: 每周一自动更新价格数据
 
 on:
   schedule:
-    # 每周一 09:00 UTC+8 (01:00 UTC)
+    # 每周一 09:00 UTC+8 (01:00 UTC) — 主调度
     - cron: '0 1 * * 1'
-  workflow_dispatch:  # 允许手动触发
+    # 每周一 12:00 UTC+8 (04:00 UTC) — 备用调度（主调度失败时兜底）
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: '强制更新（忽略抓取失败）'
+        required: false
+        default: 'false'
+        type: boolean
 
 permissions:
   contents: write
 
+# 防止同一时间多个workflow并行运行
+concurrency:
+  group: weekly-update
+  cancel-in-progress: true
+
 jobs:
   update-prices:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
@@ -31,19 +46,53 @@ jobs:
           pip install requests beautifulsoup4 selenium
 
       - name: 更新存储芯片价格
-        run: python update_prices.py
+        id: storage
+        run: |
+          python update_prices.py
+          echo "storage_ok=true" >> $GITHUB_OUTPUT
 
       - name: 更新阻容感/PCB 价格
-        continue-on-error: true  # 阻容感抓取失败不阻断存储价格提交
-        run: python update_passive.py
+        id: passive
+        continue-on-error: true
+        run: |
+          python update_passive.py
+          echo "passive_ok=true" >> $GITHUB_OUTPUT
 
       - name: LLM 智能分析生成
-        continue-on-error: true  # LLM 失败不阻断价格提交
+        id: analysis
+        continue-on-error: true
         env:
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
           LLM_MODEL: ${{ secrets.LLM_MODEL }}
-        run: python update_analysis.py
+        run: |
+          python update_analysis.py
+          echo "analysis_ok=true" >> $GITHUB_OUTPUT
+
+      - name: 输出更新摘要
+        if: always()
+        run: |
+          echo "## 📊 更新摘要" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 步骤 | 状态 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------|" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.storage.outputs.storage_ok }}" = "true" ]; then
+            echo "| 存储芯片价格 | ✅ 成功 |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| 存储芯片价格 | ❌ 失败 |" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ steps.passive.outputs.passive_ok }}" = "true" ]; then
+            echo "| 阻容感/PCB 价格 | ✅ 成功 |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| 阻容感/PCB 价格 | ⚠️ 失败（不阻断） |" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ steps.analysis.outputs.analysis_ok }}" = "true" ]; then
+            echo "| LLM 智能分析 | ✅ 成功 |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| LLM 智能分析 | ⚠️ 失败（不阻断） |" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📅 执行时间: $(date '+%Y-%m-%d %H:%M:%S %Z')" >> $GITHUB_STEP_SUMMARY
 
       - name: 检查是否有变更
         id: changes

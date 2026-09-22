@@ -1,35 +1,35 @@
 {
-  "date": "2026-09-15",
+  "date": "2026-09-22",
   "generated_by": "template",
   "highlights": [
     {
       "num": 1,
-      "title": "DDR5 24Gb Major 月涨+14.6%",
-      "desc": "DDR5 24Gb Major最新报价$55.0，月度变化+14.6%。",
-      "tag": "暴涨"
+      "title": "PCIe3.0 256GB 月跌-49.3%",
+      "desc": "PCIe3.0 256GB最新报价$38.0，月度变化-49.3%。",
+      "tag": "降价"
     },
     {
       "num": 2,
-      "title": "DDR5 16Gb Major 月涨+10.0%",
-      "desc": "DDR5 16Gb Major最新报价$44.0，月度变化+10.0%。",
-      "tag": "暴涨"
+      "title": "PCIe4.0 512GB 月跌-43.7%",
+      "desc": "PCIe4.0 512GB最新报价$80.0，月度变化-43.7%。",
+      "tag": "降价"
     },
     {
       "num": 3,
-      "title": "DDR5 16Gb eTT 月涨+7.8%",
-      "desc": "DDR5 16Gb eTT最新报价$24.8，月度变化+7.8%。",
-      "tag": "涨价"
+      "title": "PCIe4.0 1TB 月跌-43.5%",
+      "desc": "PCIe4.0 1TB最新报价$130.0，月度变化-43.5%。",
+      "tag": "降价"
     },
     {
       "num": 4,
-      "title": "0402 1uF X5R 10V Samsung +70.7%",
-      "desc": "MLCC0402 1uF X5R 10V(Samsung)最新¥0.0384，月度变化+70.7%。",
+      "title": "0402 1uF X5R 10V Samsung +89.7%",
+      "desc": "MLCC0402 1uF X5R 10V(Samsung)最新¥0.0442，月度变化+89.7%。",
       "tag": "涨价"
     },
     {
       "num": 5,
-      "title": "0402 1uF X5R 10V Yageo -18.0%",
-      "desc": "MLCC0402 1uF X5R 10V(Yageo)最新¥0.0582，月度变化-18.0%。",
+      "title": "0402 1uF X5R 10V Yageo -27.0%",
+      "desc": "MLCC0402 1uF X5R 10V(Yageo)最新¥0.0544，月度变化-27.0%。",
       "tag": "降价"
     }
   ],
