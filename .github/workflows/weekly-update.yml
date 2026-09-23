@@ -94,6 +94,93 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "📅 执行时间: $(date '+%Y-%m-%d %H:%M:%S %Z')" >> $GITHUB_STEP_SUMMARY
 
+      - name: 飞书通知
+        if: always() && secrets.FEISHU_WEBHOOK_URL != ''
+        env:
+          FEISHU_WEBHOOK: ${{ secrets.FEISHU_WEBHOOK_URL }}
+          STORAGE_OK: ${{ steps.storage.outputs.storage_ok }}
+          PASSIVE_OK: ${{ steps.passive.outputs.passive_ok }}
+          ANALYSIS_OK: ${{ steps.analysis.outputs.analysis_ok }}
+          HAS_CHANGES: ${{ steps.changes.outputs.changed }}
+        run: |
+          # 构建状态文本
+          STATUS_LIST=""
+          FAIL_COUNT=0
+
+          if [ "$STORAGE_OK" = "true" ]; then
+            STATUS_LIST="${STATUS_LIST}✅ 存储芯片价格：成功\\n"
+          else
+            STATUS_LIST="${STATUS_LIST}❌ 存储芯片价格：失败\\n"
+            FAIL_COUNT=$((FAIL_COUNT+1))
+          fi
+
+          if [ "$PASSIVE_OK" = "true" ]; then
+            STATUS_LIST="${STATUS_LIST}✅ 阻容感/PCB 价格：成功\\n"
+          else
+            STATUS_LIST="${STATUS_LIST}⚠️ 阻容感/PCB 价格：失败（抓取被拦截）\\n"
+            FAIL_COUNT=$((FAIL_COUNT+1))
+          fi
+
+          if [ "$ANALYSIS_OK" = "true" ]; then
+            STATUS_LIST="${STATUS_LIST}✅ LLM 智能分析：成功\\n"
+          else
+            STATUS_LIST="${STATUS_LIST}⚠️ LLM 智能分析：失败\\n"
+          fi
+
+          if [ "$HAS_CHANGES" = "true" ]; then
+            STATUS_LIST="${STATUS_LIST}\\n📦 数据已提交推送"
+          else
+            STATUS_LIST="${STATUS_LIST}\\n📦 无变更（数据未更新）"
+          fi
+
+          # 确定标题颜色
+          if [ $FAIL_COUNT -gt 0 ]; then
+            TITLE="⚠️ 半导体情报站更新异常"
+            COLOR="orange"
+          else
+            TITLE="✅ 半导体情报站更新成功"
+            COLOR="green"
+          fi
+
+          # 发送飞书消息
+          curl -s -X POST "$FEISHU_WEBHOOK" \
+            -H 'Content-Type: application/json' \
+            -d "{
+              \"msg_type\": \"interactive\",
+              \"card\": {
+                \"header\": {
+                  \"title\": {\"tag\": \"plain_text\", \"content\": \"$TITLE\"},
+                  \"template\": \"$COLOR\"
+                },
+                \"elements\": [
+                  {
+                    \"tag\": \"div\",
+                    \"text\": {
+                      \"tag\": \"lark_md\",
+                      \"content\": \"📅 $(date '+%Y-%m-%d %H:%M')\\n\\n${STATUS_LIST}\"
+                    }
+                  },
+                  {
+                    \"tag\": \"action\",
+                    \"actions\": [
+                      {
+                        \"tag\": \"button\",
+                        \"text\": {\"tag\": \"plain_text\", \"content\": \"查看情报站\"},
+                        \"url\": \"https://leah-li1026.github.io/semiconductor-news/index.html\",
+                        \"type\": \"primary\"
+                      },
+                      {
+                        \"tag\": \"button\",
+                        \"text\": {\"tag\": \"plain_text\", \"content\": \"查看日志\"},
+                        \"url\": \"https://github.com/leah-li1026/semiconductor-news/actions\",
+                        \"type\": \"default\"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }"
+
       - name: 检查是否有变更
         id: changes
         run: |
