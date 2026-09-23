@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.png
+lcsc_debug.png
+lcsc_product.png
+*- 副本*.html
+*- 副本 (*.html
